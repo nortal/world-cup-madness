@@ -1,8 +1,15 @@
-# Stack Decision (Draft ADR)
+# Stack Decision (ADR)
 
-**Status:** Proposed — not yet formally approved.
-**Resolves:** [OD-007](open-decisions.md#od-007--implementation-approach) (Implementation approach) — *remains formally open until ratified by the architecture board.*
+**Status:** Approved 2026-05-15.
+**Resolves:** [OD-007](open-decisions.md#od-007--implementation-approach) (Implementation approach).
+**Related:** [OD-001](open-decisions.md#od-001--approved-email-domains) — eligibility validated via Entra ID tenant claim (`tid`), not email domain alone.
 **Last updated:** 2026-05-15
+
+> **Approval notes.** Stack approved as proposed below. Sub-conditions tracked as Phase 1 follow-ups:
+> (1) Nortal Security signoff on OAuth + tenant-allowlist;
+> (2) Entra ID tenant integration spike;
+> (3) Supabase Pro-tier budget approval for tournament window (June–July 2026);
+> (4) Architecture board minute (if governance requires).
 
 ## Proposed stack
 
@@ -74,9 +81,11 @@ Managed pool platforms were rejected because they generally cannot meet FR-001/F
 - **Localization** — NFR-010 mentions English/Spanish; not in MVP scope.
 - **Engagement enhancements** (§14.2: completeness meter, badges, team leagues, etc.) — MVP vs v2 scope to be decided.
 
-## Next steps to formally close OD-007
+## Phase 1 follow-ups (OD-007 sub-conditions)
 
-1. Security review of the OAuth-plus-domain-allowlist approach for FR-001/FR-002 with Nortal security.
-2. Confirm Microsoft/Azure OAuth provider integration works with Nortal's Entra ID tenant.
-3. Validate Pro-tier upgrade budget for the tournament window.
-4. Architecture board sign-off.
+OD-007 is closed; the items below are tracked as Phase 1 work and do not block scaffolding:
+
+1. **Security review** — Nortal Security signoff on the OAuth + Entra-tenant-allowlist approach for FR-001/FR-002. Required before Phase 1 production cutover.
+2. **Entra ID tenant integration spike** — verify Microsoft/Azure OAuth provider works with Nortal's Entra tenant ID; obtain the tenant `tid` value from Nortal IT for the trigger/RLS check (per OD-001 resolution).
+3. **Pro-tier budget** — approve the $25/mo Supabase Pro-tier upgrade for the tournament window (June–July 2026); needed before Phase 5 operational readiness for the 99.9% SLA (NFR-001).
+4. **Architecture board minute** — if Nortal governance requires a formal minute, capture this ADR's approval in the appropriate system.
