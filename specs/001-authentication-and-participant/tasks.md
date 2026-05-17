@@ -19,14 +19,14 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Initialize Next.js 15 App Router project at `project-repos/world-cup-madness/`: create `package.json`, `tsconfig.json` (strict mode, `"target": "ES2022"`), `next.config.ts`, `app/layout.tsx`, `app/page.tsx` placeholder
-- [ ] T002 Install runtime deps: `npm install next@15 react@19 react-dom@19 @supabase/supabase-js @supabase/ssr next-intl tailwindcss@4 @tailwindcss/postcss postcss autoprefixer`
-- [ ] T003 Install dev deps: `npm install -D typescript @types/react @types/react-dom @playwright/test @axe-core/playwright jest @testing-library/react @testing-library/jest-dom eslint eslint-config-next prettier prettier-plugin-tailwindcss supabase`
-- [ ] T004 [P] Configure ESLint at `.eslintrc.json` (extend `next/core-web-vitals`; strict TS rules; `no-console: warn`)
-- [ ] T005 [P] Configure Prettier at `.prettierrc` with `prettier-plugin-tailwindcss`
-- [ ] T006 [P] Initialize Supabase local stack: `npx supabase init` (creates `supabase/config.toml`); add `[auth.external.azure]` block per `quickstart.md` Step 6
-- [ ] T007 [P] Create env template at `.env.example` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `AUTH_AZURE_CLIENT_ID`, `AUTH_AZURE_SECRET`, `AUTH_AZURE_TENANT_ID`
-- [ ] T008 [P] Configure Tailwind CSS v4 at `app/globals.css` and `tailwind.config.ts` (default theme; Nortal-friendly font stack)
+- [x] T001 Initialize Next.js 15 App Router project at `project-repos/world-cup-madness/`: create `package.json`, `tsconfig.json` (strict mode, `"target": "ES2022"`), `next.config.ts`, `app/layout.tsx`, `app/page.tsx` placeholder
+- [x] T002 Install runtime deps: `npm install next@15 react@19 react-dom@19 @supabase/supabase-js @supabase/ssr next-intl tailwindcss@4 @tailwindcss/postcss postcss autoprefixer`
+- [x] T003 Install dev deps: `npm install -D typescript @types/react @types/react-dom @playwright/test @axe-core/playwright jest @testing-library/react @testing-library/jest-dom eslint eslint-config-next prettier prettier-plugin-tailwindcss supabase`
+- [x] T004 [P] Configure ESLint at `.eslintrc.json` (extend `next/core-web-vitals`; strict TS rules; `no-console: warn`)
+- [x] T005 [P] Configure Prettier at `.prettierrc` with `prettier-plugin-tailwindcss`
+- [x] T006 [P] Initialize Supabase local stack: `npx supabase init` (creates `supabase/config.toml`); add `[auth.external.azure]` block per `quickstart.md` Step 6
+- [x] T007 [P] Create env template at `.env.example` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `AUTH_AZURE_CLIENT_ID`, `AUTH_AZURE_SECRET`, `AUTH_AZURE_TENANT_ID`
+- [x] T008 [P] Configure Tailwind CSS v4 at `app/globals.css` and `tailwind.config.ts` (default theme; Nortal-friendly font stack)
 
 ---
 

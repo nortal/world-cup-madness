@@ -5,6 +5,7 @@ secrets/plain/*
 # Common secret patterns
 *.env
 .env.*
+!.env.example
 *.pem
 *.key
 credentials.*
@@ -27,3 +28,12 @@ venv/
 
 # Node (if used)
 node_modules/
+
+# Next.js / TypeScript build artifacts
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
