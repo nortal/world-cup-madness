@@ -55,10 +55,10 @@
 ### Auth hook + Supabase clients (T023 depends on Supabase Auth provider config from T006)
 
 - [x] T023 Auth hook at `supabase/auth-hooks/before-issue-token.ts` (TypeScript / Deno): copies Microsoft JWT claims (`tid`, `oid`) from `provider_token` into Supabase session JWT `app_metadata` per research R-3
-- [ ] T024 [P] Supabase server client at `lib/supabase/server.ts` using `@supabase/ssr` `createServerClient()` + Next.js `cookies()`
-- [ ] T025 [P] Supabase browser client at `lib/supabase/client.ts` using `@supabase/ssr` `createBrowserClient()`
-- [ ] T026 [P] Supabase middleware helper at `lib/supabase/middleware.ts`: session-refresh function consumed by top-level `middleware.ts`
-- [ ] T027 Generate Supabase TypeScript types: `npx supabase gen types typescript --local > lib/supabase/database.types.ts` (depends on T009–T017 applied)
+- [x] T024 [P] Supabase server client at `lib/supabase/server.ts` using `@supabase/ssr` `createServerClient()` + Next.js `cookies()`
+- [x] T025 [P] Supabase browser client at `lib/supabase/client.ts` using `@supabase/ssr` `createBrowserClient()`
+- [x] T026 [P] Supabase middleware helper at `lib/supabase/middleware.ts`: session-refresh function consumed by top-level `middleware.ts`
+- [x] T027 Generate Supabase TypeScript types: `npx supabase gen types typescript --local > lib/supabase/database.types.ts` (depends on T009–T017 applied)
 
 ### i18n setup
 
