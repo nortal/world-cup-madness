@@ -62,11 +62,11 @@
 
 ### i18n setup
 
-- [ ] T028 [P] next-intl config at `lib/i18n/config.ts`: locales `['en', 'es', 'pt-BR']`, default `en`, message-loader function per ADR-008
-- [ ] T029 [P] Translation file `lib/i18n/messages/en.json` (initial empty stub `{}`; populated per-story)
-- [ ] T030 [P] Translation file `lib/i18n/messages/es.json` (initial empty stub)
-- [ ] T031 [P] Translation file `lib/i18n/messages/pt-BR.json` (initial empty stub)
-- [ ] T032 Top-level `middleware.ts` at repo root of `project-repos/world-cup-madness/`: chain `next-intl` Accept-Language detection (T028) with Supabase session refresh (T026); ensures both run on every request
+- [x] T028 [P] next-intl config at `lib/i18n/config.ts`: locales `['en', 'es', 'pt-BR']`, default `en`, message-loader function per ADR-008
+- [x] T029 [P] Translation file `lib/i18n/messages/en.json` (initial empty stub `{}`; populated per-story)
+- [x] T030 [P] Translation file `lib/i18n/messages/es.json` (initial empty stub)
+- [x] T031 [P] Translation file `lib/i18n/messages/pt-BR.json` (initial empty stub)
+- [x] T032 Top-level `middleware.ts` at repo root of `project-repos/world-cup-madness/`: chain `next-intl` Accept-Language detection (T028) with Supabase session refresh (T026); ensures both run on every request
 
 ### Test scaffolding
 
