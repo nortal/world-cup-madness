@@ -37,3 +37,9 @@ build/
 coverage/
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

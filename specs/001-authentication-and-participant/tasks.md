@@ -70,9 +70,9 @@
 
 ### Test scaffolding
 
-- [ ] T033 [P] Playwright config at `playwright.config.ts` with default `chromium` project + `accessibility` project that runs `@axe-core/playwright`
-- [ ] T034 [P] Playwright fixtures at `e2e/fixtures/auth.ts`: helpers `signInAs({ tenant: 'eligible' | 'ineligible', oid?, role? })` that JWT-inject via `supabase.auth.signInWithIdToken()` per research R-7
-- [ ] T035 [P] Test fixture at `e2e/fixtures/db.ts`: helper `resetSupabaseState()` that truncates `participants` + `audit_log` between tests; helper `seedAdmin(oid)` that updates `tournament_config.admin_oids`
+- [x] T033 [P] Playwright config at `playwright.config.ts` with default `chromium` project + `accessibility` project that runs `@axe-core/playwright`
+- [x] T034 [P] Playwright fixtures at `e2e/fixtures/auth.ts`: helpers `signInAs({ tenant: 'eligible' | 'ineligible', oid?, role? })` that JWT-inject via `supabase.auth.signInWithIdToken()` per research R-7
+- [x] T035 [P] Test fixture at `e2e/fixtures/db.ts`: helper `resetSupabaseState()` that truncates `participants` + `audit_log` between tests; helper `seedAdmin(oid)` that updates `tournament_config.admin_oids`
 
 ---
 
