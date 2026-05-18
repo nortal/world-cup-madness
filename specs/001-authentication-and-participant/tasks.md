@@ -34,27 +34,27 @@
 
 ### Database migrations (sequential — each depends on previous)
 
-- [ ] T009 Migration `supabase/migrations/0001_extensions.sql`: `CREATE EXTENSION IF NOT EXISTS citext` (per `data-model.md` Extensions section)
-- [ ] T010 Migration `supabase/migrations/0002_create_tournament_config.sql`: singleton `tournament_config` table per `data-model.md` Tables → tournament_config
-- [ ] T011 Migration `supabase/migrations/0003_create_participants.sql`: `participants` table + indexes + `trim_participant_email()` BEFORE-INSERT/UPDATE trigger per `data-model.md` Tables → participants
-- [ ] T012 Migration `supabase/migrations/0004_create_audit_log.sql`: `audit_log` table with nullable `participant_id` + indexes per `data-model.md` Tables → audit_log
-- [ ] T013 Migration `supabase/migrations/0005_audit_triggers.sql`: `audit_participants_changes()` SECURITY DEFINER function + AFTER-INSERT and AFTER-UPDATE triggers per `data-model.md` Audit Trigger
-- [ ] T014 Migration `supabase/migrations/0006_provision_function.sql`: `provision_participant_from_jwt()` and `record_auth_failure()` SECURITY DEFINER functions with explicit REVOKE/GRANT per `data-model.md`
-- [ ] T015 Migration `supabase/migrations/0007_profile_functions.sql`: `update_display_name(text)` and `dismiss_welcome()` SECURITY DEFINER functions with REVOKE/GRANT per `data-model.md`
-- [ ] T016 Migration `supabase/migrations/0008_rls_policies.sql`: `is_eligible_nortal_user()` STABLE predicate, RLS policies for `participants` / `tournament_config` / `audit_log`, `participants_public` view per `data-model.md`
-- [ ] T017 Migration `supabase/migrations/0009_seed_admin.sql`: insert singleton `tournament_config` row (`nortal_tenant_id` from `AUTH_AZURE_TENANT_ID` env or hardcoded test UUID for local dev; `admin_oids` initial empty array)
+- [x] T009 Migration `supabase/migrations/0001_extensions.sql`: `CREATE EXTENSION IF NOT EXISTS citext` (per `data-model.md` Extensions section)
+- [x] T010 Migration `supabase/migrations/0002_create_tournament_config.sql`: singleton `tournament_config` table per `data-model.md` Tables → tournament_config
+- [x] T011 Migration `supabase/migrations/0003_create_participants.sql`: `participants` table + indexes + `trim_participant_email()` BEFORE-INSERT/UPDATE trigger per `data-model.md` Tables → participants
+- [x] T012 Migration `supabase/migrations/0004_create_audit_log.sql`: `audit_log` table with nullable `participant_id` + indexes per `data-model.md` Tables → audit_log
+- [x] T013 Migration `supabase/migrations/0005_audit_triggers.sql`: `audit_participants_changes()` SECURITY DEFINER function + AFTER-INSERT and AFTER-UPDATE triggers per `data-model.md` Audit Trigger
+- [x] T014 Migration `supabase/migrations/0006_provision_function.sql`: `provision_participant_from_jwt()` and `record_auth_failure()` SECURITY DEFINER functions with explicit REVOKE/GRANT per `data-model.md`
+- [x] T015 Migration `supabase/migrations/0007_profile_functions.sql`: `update_display_name(text)` and `dismiss_welcome()` SECURITY DEFINER functions with REVOKE/GRANT per `data-model.md`
+- [x] T016 Migration `supabase/migrations/0008_rls_policies.sql`: `is_eligible_nortal_user()` STABLE predicate, RLS policies for `participants` / `tournament_config` / `audit_log`, `participants_public` view per `data-model.md`
+- [x] T017 Migration `supabase/migrations/0009_seed_admin.sql`: insert singleton `tournament_config` row (`nortal_tenant_id` from `AUTH_AZURE_TENANT_ID` env or hardcoded test UUID for local dev; `admin_oids` initial empty array)
 
 ### pgTAP tests (parallel; each depends on its respective migration applied via `supabase db reset`)
 
-- [ ] T018 [P] pgTAP test `test/pgtap/001_rls_participants.sql`: verify participants SELECT policies (own row, leaderboard, admin-all) and absence of any INSERT/UPDATE/DELETE policy for `authenticated` role
-- [ ] T019 [P] pgTAP test `test/pgtap/002_rls_audit_log.sql`: verify admin-only SELECT policy and absence of mutation policies (tamper-resistant)
-- [ ] T020 [P] pgTAP test `test/pgtap/003_provision_function.sql`: verify `provision_participant_from_jwt()` returns `outcome=success/rejected/error` for eligible / ineligible / missing-config scenarios; verify FC-1 (fail-closed) and FC-2 (no participant row for ineligible)
-- [ ] T021 [P] pgTAP test `test/pgtap/004_email_normalization.sql`: insert participants with `Mike@Nortal.com` / `mike@nortal.com` / `  MIKE@NORTAL.COM  `; verify UNIQUE-violation collision and canonical stored value (R-4 / TC-13 backing)
-- [ ] T022 [P] pgTAP test `test/pgtap/005_audit_trigger.sql`: verify INSERT writes `participant.created`; UPDATE of role writes `participant.role-changed`; UPDATE of status to inactive writes `participant.deactivated` with reason `tenant.departure`; other UPDATEs write `participant.updated`
+- [x] T018 [P] pgTAP test `test/pgtap/001_rls_participants.sql`: verify participants SELECT policies (own row, leaderboard, admin-all) and absence of any INSERT/UPDATE/DELETE policy for `authenticated` role
+- [x] T019 [P] pgTAP test `test/pgtap/002_rls_audit_log.sql`: verify admin-only SELECT policy and absence of mutation policies (tamper-resistant)
+- [x] T020 [P] pgTAP test `test/pgtap/003_provision_function.sql`: verify `provision_participant_from_jwt()` returns `outcome=success/rejected/error` for eligible / ineligible / missing-config scenarios; verify FC-1 (fail-closed) and FC-2 (no participant row for ineligible)
+- [x] T021 [P] pgTAP test `test/pgtap/004_email_normalization.sql`: insert participants with `Mike@Nortal.com` / `mike@nortal.com` / `  MIKE@NORTAL.COM  `; verify UNIQUE-violation collision and canonical stored value (R-4 / TC-13 backing)
+- [x] T022 [P] pgTAP test `test/pgtap/005_audit_trigger.sql`: verify INSERT writes `participant.created`; UPDATE of role writes `participant.role-changed`; UPDATE of status to inactive writes `participant.deactivated` with reason `tenant.departure`; other UPDATEs write `participant.updated`
 
 ### Auth hook + Supabase clients (T023 depends on Supabase Auth provider config from T006)
 
-- [ ] T023 Auth hook at `supabase/auth-hooks/before-issue-token.ts` (TypeScript / Deno): copies Microsoft JWT claims (`tid`, `oid`) from `provider_token` into Supabase session JWT `app_metadata` per research R-3
+- [x] T023 Auth hook at `supabase/auth-hooks/before-issue-token.ts` (TypeScript / Deno): copies Microsoft JWT claims (`tid`, `oid`) from `provider_token` into Supabase session JWT `app_metadata` per research R-3
 - [ ] T024 [P] Supabase server client at `lib/supabase/server.ts` using `@supabase/ssr` `createServerClient()` + Next.js `cookies()`
 - [ ] T025 [P] Supabase browser client at `lib/supabase/client.ts` using `@supabase/ssr` `createBrowserClient()`
 - [ ] T026 [P] Supabase middleware helper at `lib/supabase/middleware.ts`: session-refresh function consumed by top-level `middleware.ts`
