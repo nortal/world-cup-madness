@@ -222,11 +222,15 @@ DECLARE
     v_existing      participants%ROWTYPE;
     v_new_role      TEXT;
 BEGIN
-    v_tid := (auth.jwt() ->> 'tid')::UUID;
+    -- Custom claims live in app_metadata (Supabase convention; set by the
+    -- before-issue-token hook in production and by admin.createUser in tests).
+    -- See migration 0010_fix_jwt_claim_reads.sql for the rationale.
+    v_tid := (auth.jwt() -> 'app_metadata' ->> 'tid')::UUID;
     v_oid := (auth.jwt() -> 'app_metadata' ->> 'oid')::UUID;
     v_email := (auth.jwt() ->> 'email')::CITEXT;
     v_display_name := COALESCE(
-        NULLIF(trim(auth.jwt() ->> 'name'), ''),
+        NULLIF(trim(auth.jwt() -> 'user_metadata' ->> 'name'), ''),
+        NULLIF(trim(auth.jwt() -> 'user_metadata' ->> 'full_name'), ''),
         split_part(auth.jwt() ->> 'email', '@', 1)  -- email local-part fallback
     );
 
@@ -375,7 +379,8 @@ GRANT EXECUTE ON FUNCTION record_auth_failure(TEXT, UUID, CITEXT, UUID, TEXT)
 
 ## Reusable RLS Predicate
 
-Migration `0008_rls_policies.sql` (top of file):
+Defined in migration `0008_rls_policies.sql` and updated in `0010_fix_jwt_claim_reads.sql`
+to read from `app_metadata` (Supabase convention for custom claims):
 
 ```sql
 -- ADR-009: per-request tenant eligibility check
@@ -384,7 +389,7 @@ RETURNS boolean
 LANGUAGE sql STABLE
 SET search_path = public, auth
 AS $$
-    SELECT (auth.jwt() ->> 'tid')::UUID
+    SELECT (auth.jwt() -> 'app_metadata' ->> 'tid')::UUID
         = (SELECT nortal_tenant_id FROM tournament_config WHERE id = 1)
 $$;
 ```

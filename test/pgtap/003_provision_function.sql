@@ -61,15 +61,21 @@ DECLARE
     v_claims JSONB;
 BEGIN
     v_claims := jsonb_build_object(
-        'sub',           p_sub::text,
-        'tid',           p_tid::text,
-        'email',         p_email,
-        'name',          p_name,
-        'app_metadata',  jsonb_build_object('oid', p_oid::text)
+        'sub',            p_sub::text,
+        'email',          p_email,
+        'app_metadata',   jsonb_build_object(
+                              'tid', p_tid::text,
+                              'oid', p_oid::text
+                          ),
+        'user_metadata',  jsonb_build_object('name', p_name)
     );
     PERFORM set_config('request.jwt.claims',     v_claims::text, true);
     PERFORM set_config('request.jwt.claim.sub',  p_sub::text,    true);
-    PERFORM set_config('role',                   'authenticated', true);
+    -- Note: stay as the test session's superuser role (postgres). The RPC is
+    -- SECURITY DEFINER, so it doesn't need an `authenticated`-role caller; and
+    -- the test's audit_log assertions need to read past `audit_log`'s
+    -- admin-only SELECT RLS policy. RLS-coverage testing for participants /
+    -- audit_log lives in 001_rls_participants.sql and 002_rls_audit_log.sql.
 END $$;
 
 -- ---------------------------------------------------------------------------

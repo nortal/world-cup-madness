@@ -114,17 +114,20 @@ Microsoft's JWT claims (`tid`, `oid`, `name`, `email`) are forwarded into Supaba
 ## R-7: Playwright + Supabase local-stack pattern
 
 **Decision**:
-- Local Supabase stack via `supabase start` (Docker-backed) for E2E tests
-- For OAuth: use a **stubbed Microsoft OAuth provider** at the Playwright level — intercept the OAuth redirect with `page.route()` and inject a JWT directly via `supabase.auth.signInWithIdToken()` for both eligible and ineligible test users
-- pgTAP for RLS / SECURITY DEFINER function tests; runs via `supabase db test` against the local stack
+- Local Supabase stack via `supabase start` (Docker-backed) for E2E tests.
+- For auth-gated flows: use the Supabase **admin API** (`auth.admin.createUser` / `updateUserById`) to seed an `auth.users` row carrying the desired claims in `raw_app_meta_data` (`tid`, `oid`, `provider`) and `raw_user_meta_data` (`name`, `full_name`). The page-side Supabase client then signs in via `auth.signInWithPassword` against a fixed local-only password. Real session cookies are written by `@supabase/ssr`, exercising the full app stack identically to the production OAuth callback.
+- pgTAP for RLS / SECURITY DEFINER function tests; runs via `supabase db test` against the local stack.
 
-**Rationale**: Fully-local test stack means no real Microsoft Entra dependency for CI. JWT injection is faster and more deterministic than driving Microsoft OAuth's UI. pgTAP runs at the data layer where the auth boundary actually lives — the right place for RLS policy tests.
+**Why not `signInWithIdToken`**: the original plan was to forge a Microsoft-shaped ID token and pass it to `supabase.auth.signInWithIdToken({ provider: 'azure', token })`. That does NOT work — Supabase Auth (GoTrue) performs real OIDC discovery against the configured `auth.external.azure.url` and validates the token's signature against Microsoft's JWKS. A forged token cannot pass that check, even locally. (See migration `0010_fix_jwt_claim_reads.sql` for the follow-up: RPC + RLS predicate now read custom claims from `app_metadata`, aligning the data layer with the admin-API seed path.)
+
+**Rationale**: fully-local test stack means no real Microsoft Entra dependency for CI. Admin-API seeding is faster and more deterministic than driving Microsoft OAuth's UI, and unlike `signInWithIdToken` it actually works against the local GoTrue instance. pgTAP runs at the data layer where the auth boundary actually lives — the right place for RLS policy tests.
 
 **Alternatives considered**:
 - Real Microsoft OAuth in tests — slow, flaky, requires a dedicated test tenant.
 - Mock the entire Supabase client at the Next.js level — defeats the integration purpose; misses RLS bugs.
+- Hand-mint Supabase access tokens via `JWT_SECRET` + `setSession` — works, but duplicates Supabase's session minting and loses validation against GoTrue's expected JWT shape.
 
-**Source**: Supabase local-development docs; Playwright testing patterns; pgTAP project.
+**Source**: Supabase local-development docs; Supabase admin API reference; Playwright testing patterns; pgTAP project.
 
 ---
 

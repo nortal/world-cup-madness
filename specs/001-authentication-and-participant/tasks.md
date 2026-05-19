@@ -90,9 +90,9 @@
 - [x] T039 [US1] [P] Sign-out Route Handler at `app/auth/sign-out/route.ts`: `supabase.auth.signOut()` → redirect to `/`
 - [x] T040 [US1] Participant dashboard at `app/(participant)/dashboard/page.tsx` (Server Component): fetch participant row including `welcome_dismissed_at`, render greeting + placeholder for upcoming-matches list (full prediction UI is a future feature)
 - [x] T041 [US1] [P] Add en/es/pt-BR translation keys for landing + sign-in button + dashboard greeting + dashboard empty-state to `lib/i18n/messages/{en,es,pt-BR}.json`
-- [ ] T042 [US1] [P] Playwright test `e2e/tests/auth-eligible-new-user.spec.ts` (TC-1): JWT-inject eligible new user → assert participant row created with correct `oid`/`email`/`display_name`, `last_login_at` set, redirect to `/dashboard`
-- [ ] T043 [US1] [P] Playwright test `e2e/tests/auth-eligible-returning.spec.ts` (TC-2): pre-seed existing participant → JWT-inject same `oid` → assert no new row, `last_login_at` updated
-- [ ] T044 [US1] [P] Playwright test `e2e/tests/auth-per-request-rls.spec.ts` (TC-7): JWT-inject eligible user, then mutate session JWT to a non-Nortal `tid` → assert next authenticated query is denied at the RLS layer (no rows returned for own participant SELECT)
+- [x] T042 [US1] [P] Playwright test `e2e/tests/auth-eligible-new-user.spec.ts` (TC-1): JWT-inject eligible new user → assert participant row created with correct `oid`/`email`/`display_name`, `last_login_at` set, redirect to `/dashboard`
+- [x] T043 [US1] [P] Playwright test `e2e/tests/auth-eligible-returning.spec.ts` (TC-2): pre-seed existing participant → JWT-inject same `oid` → assert no new row, `last_login_at` updated
+- [x] T044 [US1] [P] Playwright test `e2e/tests/auth-per-request-rls.spec.ts` (TC-7): JWT-inject eligible user, then mutate session JWT to a non-Nortal `tid` → assert next authenticated query is denied at the RLS layer (no rows returned for own participant SELECT)
 
 ---
 

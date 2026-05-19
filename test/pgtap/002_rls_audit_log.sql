@@ -61,8 +61,10 @@ SELECT policy_roles_are(
     'audit_log_admin_select policy applies to the authenticated role'
 );
 
--- 4b. Policy USING predicate references the eligibility predicate AND an
---     admin-role check on the participants table (per 0008_rls_policies.sql)
+-- 4b. Policy USING predicate references the eligibility predicate AND the
+--     SECURITY DEFINER admin-role check (`is_admin_user()`, introduced in
+--     migration 0010 to break the participants → policy → participants
+--     recursion that the original inline EXISTS clause created).
 SELECT ok(
     (SELECT qual
        FROM pg_policies
@@ -76,8 +78,8 @@ SELECT ok(
       WHERE schemaname = 'public'
         AND tablename  = 'audit_log'
         AND policyname = 'audit_log_admin_select')
-    LIKE '%role%=%admin%',
-    'audit_log_admin_select USING clause checks is_eligible_nortal_user() and admin role'
+    LIKE '%is_admin_user()%',
+    'audit_log_admin_select USING clause checks is_eligible_nortal_user() and is_admin_user()'
 );
 
 -- 5. No INSERT / UPDATE / DELETE policies exist on audit_log
