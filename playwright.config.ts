@@ -33,10 +33,17 @@ loadEnvConfig(process.cwd());
  */
 export default defineConfig({
   testDir: './e2e/tests',
-  fullyParallel: true,
+  // Tests share a single Supabase DB and each `beforeEach` truncates
+  // `participants` / `audit_log` / resets `tournament_config.admin_oids` via
+  // `resetSupabaseState()` (see `e2e/fixtures/db.ts`). Running two specs
+  // concurrently means one worker's reset can wipe rows another worker is
+  // mid-test on — the symptom is `/dashboard` redirecting to `/` because the
+  // expected participant row vanished. Per-test DB isolation would require
+  // per-worker Supabase schemas; until that exists, serialize the suite.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: 'html',
   use: {
     baseURL: process.env.BASE_URL ?? 'http://127.0.0.1:3000',
