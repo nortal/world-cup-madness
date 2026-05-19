@@ -123,7 +123,7 @@
 - [x] T050 [US3] `/auth-error` page at `app/(public)/auth-error/page.tsx` (Server Component): "Sign-in didn't complete" message, prominent **Retry** button (links to landing page sign-in flow), contact info, optional service-status link
 - [x] T051 [US3] Update auth callback handler `app/auth/callback/route.ts` (modified from T038): wrap `exchangeCodeForSession` in try/catch; on failure call `supabase.rpc('record_auth_failure', { p_action: 'auth.provider-error', p_oid: null, p_email: null, p_attempted_tid: null, p_reason: 'callback.exchange-failed' })` and redirect to `/auth-error`
 - [x] T052 [US3] [P] Add en/es/pt-BR translation keys for `/auth-error` (heading, body, retry button, contact line, status link) to `lib/i18n/messages/{en,es,pt-BR}.json`
-- [ ] T053 [US3] [P] Playwright test `e2e/tests/auth-provider-error.spec.ts` (TC-10): mock callback exchange failure (e.g. invalid `code` query param) → assert redirect to `/auth-error`, `audit_log` has `auth.provider-error` row with `reason='callback.exchange-failed'`, clicking **Retry** navigates back to landing → triggers fresh OAuth flow
+- [x] T053 [US3] [P] Playwright test `e2e/tests/auth-provider-error.spec.ts` (TC-10): mock callback exchange failure (e.g. invalid `code` query param) → assert redirect to `/auth-error`, `audit_log` has `auth.provider-error` row with `reason='callback.exchange-failed'`, clicking **Retry** navigates back to landing → triggers fresh OAuth flow
 
 ---
 
