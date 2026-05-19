@@ -135,7 +135,7 @@
 
 **Covers**: FR-A5.
 
-- [ ] T054 [US4] Update dashboard `app/(participant)/dashboard/page.tsx` (modified from T040): conditionally render an `<AdminNavLink />` stub when `participant.role === 'admin'` (link target placeholder for future admin console)
+- [x] T054 [US4] Update dashboard `app/(participant)/dashboard/page.tsx` (modified from T040): conditionally render an `<AdminNavLink />` stub when `participant.role === 'admin'` (link target placeholder for future admin console)
 - [ ] T055 [US4] [P] Playwright test `e2e/tests/auth-admin-role.spec.ts` (TC-3): seed admin oid, JWT-inject that user → assert participant `role='admin'`, dashboard renders the admin-nav element
 - [ ] T056 [US4] [P] Playwright test `e2e/tests/auth-role-downgrade.spec.ts` (TC-9): provision participant as admin, then update `tournament_config.admin_oids` to remove that oid, then re-sign-in → assert `role='participant'`, `audit_log` has `participant.role-changed` row, admin-nav element no longer rendered
 

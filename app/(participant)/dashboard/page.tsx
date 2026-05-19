@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import AdminNavLink from '@/components/auth/AdminNavLink';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -27,9 +28,10 @@ import { createClient } from '@/lib/supabase/server';
  *     Constitution §1.3 — that is an unexpected condition because the auth
  *     callback should have provisioned the row.
  *
- * Attachment points for follow-up tasks (intentionally left as comments — do
- * NOT add stub components here):
- *   - T054 (US4): render `<AdminNavLink />` when `participant.role === 'admin'`.
+ * Attachment points for follow-up tasks:
+ *   - T054 (US4): LANDED — renders `<AdminNavLink />` inside the header when
+ *     `participant.role === 'admin'` (TC-3, FR-A5). The `/admin` route is a
+ *     future feature; the link is intentionally a stub for MVP.
  *   - T058 (US5): wrap the rendered tree in `<DashboardClient>` and mount
  *     `<WelcomeModal />` gated on `participant.welcome_dismissed_at === null`.
  *     The `welcomeDismissedAt` value is already projected by the query below
@@ -94,8 +96,11 @@ export default async function DashboardPage() {
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
-        {/* T054 (US4) attachment point — <AdminNavLink /> renders here when
-            participant.role === 'admin'. */}
+        {/* T054 (US4) — admin nav link surfaced only when the role check passes
+            (TC-3 / FR-A5). The role value comes from the RLS-protected
+            participants row above, so this gate is the authoritative
+            server-side check. The `/admin` route is a future feature. */}
+        {participant.role === 'admin' && <AdminNavLink />}
       </header>
 
       <section className="mt-10" aria-labelledby="upcoming-matches-heading">

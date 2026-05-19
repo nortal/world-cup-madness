@@ -10,7 +10,8 @@
   },
   "dashboard": {
     "greeting": "Olá, {name}",
-    "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado."
+    "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado.",
+    "adminNavLabel": "Console de administração"
   },
   "accessDenied": {
     "heading": "Este torneio é para colaboradores da Nortal",

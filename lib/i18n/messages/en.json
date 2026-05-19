@@ -10,7 +10,8 @@
   },
   "dashboard": {
     "greeting": "Welcome, {name}",
-    "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized."
+    "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized.",
+    "adminNavLabel": "Admin console"
   },
   "accessDenied": {
     "heading": "This pool is for Nortal collaborators",
