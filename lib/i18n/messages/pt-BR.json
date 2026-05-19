@@ -11,5 +11,11 @@
   "dashboard": {
     "greeting": "Olá, {name}",
     "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado."
+  },
+  "accessDenied": {
+    "heading": "Este torneio é para colaboradores da Nortal",
+    "body": "O login foi recusado porque sua conta Microsoft não pertence ao tenant da Nortal no Entra.",
+    "retryLabel": "Entrar com outra conta",
+    "contact": "Se você acredita que isso é um engano, entre em contato com o administrador do torneio."
   }
 }

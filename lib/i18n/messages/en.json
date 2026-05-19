@@ -11,5 +11,11 @@
   "dashboard": {
     "greeting": "Welcome, {name}",
     "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized."
+  },
+  "accessDenied": {
+    "heading": "This pool is for Nortal collaborators",
+    "body": "Sign-in was rejected because your Microsoft account is not in the Nortal Entra tenant.",
+    "retryLabel": "Sign in with a different account",
+    "contact": "If you believe this is a mistake, please contact your tournament administrator."
   }
 }

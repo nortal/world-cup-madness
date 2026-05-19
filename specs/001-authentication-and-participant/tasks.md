@@ -104,8 +104,8 @@
 
 **Covers**: FR-002, FR-A4, FR-A7.
 
-- [ ] T045 [US2] `/access-denied` page at `app/(public)/access-denied/page.tsx` (Server Component): rejection message ("This pool is only available to Nortal collaborators…"), "Sign in with a different account" button (links to `/auth/sign-out` then `/`), contact-info placeholder
-- [ ] T046 [US2] [P] Add en/es/pt-BR translation keys for `/access-denied` (heading, body, retry CTA, contact line) to `lib/i18n/messages/{en,es,pt-BR}.json`
+- [x] T045 [US2] `/access-denied` page at `app/(public)/access-denied/page.tsx` (Server Component): rejection message ("This pool is only available to Nortal collaborators…"), "Sign in with a different account" button (links to `/auth/sign-out` then `/`), contact-info placeholder
+- [x] T046 [US2] [P] Add en/es/pt-BR translation keys for `/access-denied` (heading, body, retry CTA, contact line) to `lib/i18n/messages/{en,es,pt-BR}.json`
 - [ ] T047 [US2] [P] Playwright test `e2e/tests/auth-ineligible-rejection.spec.ts` (TC-5): JWT-inject user with non-Nortal `tid` → assert no participant row exists for that `oid`, `audit_log` has `auth.rejected` row with `actor_oid` + `actor_email` + `attempted_tid`, redirect lands on `/access-denied`
 - [ ] T048 [US2] [P] Playwright test `e2e/tests/auth-tenant-departure.spec.ts` (TC-6): pre-seed active participant → JWT-inject same `oid` with non-Nortal `tid` → assert participant `status='inactive'`, audit_log has BOTH `participant.deactivated` (reason `tenant.departure`) and `auth.rejected` rows, predictions placeholder data preserved
 - [ ] T049 [US2] [P] Playwright test `e2e/tests/audit-search-auth-failures.spec.ts` (TC-8): seed admin, sign in as admin, query `audit_log` via PostgREST filtered by `action='auth.rejected'` → assert returned rows include the columns admins need (oid, email, attempted_tid, occurred_at)
