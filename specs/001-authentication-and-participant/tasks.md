@@ -86,9 +86,9 @@
 
 - [x] T036 [US1] Public landing page at `app/(public)/page.tsx` (Server Component): one-line description + `<SignInButton />`; uses next-intl `t('landing.headline')` etc.
 - [x] T037 [US1] [P] Sign-in button at `components/auth/SignInButton.tsx` (Client Component): calls `supabase.auth.signInWithOAuth({ provider: 'azure', options: { scopes: 'openid email profile', redirectTo: '${window.location.origin}/auth/callback' } })`
-- [ ] T038 [US1] Auth callback Route Handler at `app/auth/callback/route.ts`: `exchangeCodeForSession(code)` → call `supabase.rpc('provision_participant_from_jwt')` → redirect on `outcome` (`success` → `/dashboard`, `rejected` → `/access-denied`, `error` → `/auth-error`); see `contracts/rpc-provision-participant.md` for response shape
+- [x] T038 [US1] Auth callback Route Handler at `app/auth/callback/route.ts`: `exchangeCodeForSession(code)` → call `supabase.rpc('provision_participant_from_jwt')` → redirect on `outcome` (`success` → `/dashboard`, `rejected` → `/access-denied`, `error` → `/auth-error`); see `contracts/rpc-provision-participant.md` for response shape
 - [x] T039 [US1] [P] Sign-out Route Handler at `app/auth/sign-out/route.ts`: `supabase.auth.signOut()` → redirect to `/`
-- [ ] T040 [US1] Participant dashboard at `app/(participant)/dashboard/page.tsx` (Server Component): fetch participant row including `welcome_dismissed_at`, render greeting + placeholder for upcoming-matches list (full prediction UI is a future feature)
+- [x] T040 [US1] Participant dashboard at `app/(participant)/dashboard/page.tsx` (Server Component): fetch participant row including `welcome_dismissed_at`, render greeting + placeholder for upcoming-matches list (full prediction UI is a future feature)
 - [x] T041 [US1] [P] Add en/es/pt-BR translation keys for landing + sign-in button + dashboard greeting + dashboard empty-state to `lib/i18n/messages/{en,es,pt-BR}.json`
 - [ ] T042 [US1] [P] Playwright test `e2e/tests/auth-eligible-new-user.spec.ts` (TC-1): JWT-inject eligible new user → assert participant row created with correct `oid`/`email`/`display_name`, `last_login_at` set, redirect to `/dashboard`
 - [ ] T043 [US1] [P] Playwright test `e2e/tests/auth-eligible-returning.spec.ts` (TC-2): pre-seed existing participant → JWT-inject same `oid` → assert no new row, `last_login_at` updated
