@@ -1,4 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
+import { loadEnvConfig } from '@next/env';
+
+// Load `.env.local` (and other Next.js-recognized env files) into `process.env`
+// for both the webServer and the test workers. Next.js' dev server loads these
+// automatically; the test workers do NOT, so without this the fixtures in
+// `e2e/fixtures/db.ts` cannot resolve `NEXT_PUBLIC_SUPABASE_URL` /
+// `SUPABASE_SERVICE_ROLE_KEY`.
+loadEnvConfig(process.cwd());
 
 /**
  * Playwright configuration for World Cup Madness E2E + accessibility tests.
