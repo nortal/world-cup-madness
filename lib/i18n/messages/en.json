@@ -1,1 +1,15 @@
-{}
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Predict every match of FIFA World Cup 2026 and compete with your colleagues."
+  },
+  "signIn": {
+    "label": "Sign in with Microsoft",
+    "loading": "Signing in…",
+    "error": "Sign-in could not start. Please try again."
+  },
+  "dashboard": {
+    "greeting": "Welcome, {name}",
+    "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized."
+  }
+}

@@ -1,1 +1,15 @@
-{}
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Faça palpites para cada jogo da Copa do Mundo FIFA 2026 e compita com seus colegas."
+  },
+  "signIn": {
+    "label": "Entrar com a Microsoft",
+    "loading": "Entrando…",
+    "error": "Não foi possível iniciar o login. Tente novamente."
+  },
+  "dashboard": {
+    "greeting": "Olá, {name}",
+    "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado."
+  }
+}

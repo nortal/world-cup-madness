@@ -1,1 +1,15 @@
-{}
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Pronostica cada partido de la Copa Mundial FIFA 2026 y compite con tus colegas."
+  },
+  "signIn": {
+    "label": "Iniciar sesión con Microsoft",
+    "loading": "Iniciando sesión…",
+    "error": "No se pudo iniciar el inicio de sesión. Por favor, inténtalo de nuevo."
+  },
+  "dashboard": {
+    "greeting": "Hola, {name}",
+    "emptyState": "Aún no hay partidos próximos. El calendario aparecerá aquí cuando el torneo esté confirmado."
+  }
+}
