@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import AdminNavLink from '@/components/auth/AdminNavLink';
+import DashboardClient from '@/components/auth/DashboardClient';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -32,10 +33,11 @@ import { createClient } from '@/lib/supabase/server';
  *   - T054 (US4): LANDED — renders `<AdminNavLink />` inside the header when
  *     `participant.role === 'admin'` (TC-3, FR-A5). The `/admin` route is a
  *     future feature; the link is intentionally a stub for MVP.
- *   - T058 (US5): wrap the rendered tree in `<DashboardClient>` and mount
- *     `<WelcomeModal />` gated on `participant.welcome_dismissed_at === null`.
- *     The `welcomeDismissedAt` value is already projected by the query below
- *     so T058 only needs to thread it into a client wrapper.
+ *   - T058 (US5): LANDED — the rendered tree is wrapped in `<DashboardClient>`
+ *     (Client Component) which conditionally mounts `<WelcomeModal />` when
+ *     `welcome_dismissed_at === null`. The dashboard subtree itself stays
+ *     server-rendered (passed through `children`); only the modal-mounting
+ *     decision crosses the client boundary.
  *
  * Translation namespace: `dashboard` (see `lib/i18n/messages/{en,es,pt-BR}.json`).
  */
@@ -92,28 +94,29 @@ export default async function DashboardPage() {
   const nameForGreeting = trimmedName.length > 0 ? trimmedName : 'Participant';
   const greeting = t('greeting', { name: nameForGreeting });
 
+  const isFirstLogin = participant.welcome_dismissed_at === null;
+
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
-        {/* T054 (US4) — admin nav link surfaced only when the role check passes
-            (TC-3 / FR-A5). The role value comes from the RLS-protected
-            participants row above, so this gate is the authoritative
-            server-side check. The `/admin` route is a future feature. */}
-        {participant.role === 'admin' && <AdminNavLink />}
-      </header>
+    <DashboardClient isFirstLogin={isFirstLogin}>
+      <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
+          {/* T054 (US4) — admin nav link surfaced only when the role check passes
+              (TC-3 / FR-A5). The role value comes from the RLS-protected
+              participants row above, so this gate is the authoritative
+              server-side check. The `/admin` route is a future feature. */}
+          {participant.role === 'admin' && <AdminNavLink />}
+        </header>
 
-      <section className="mt-10" aria-labelledby="upcoming-matches-heading">
-        <h2 id="upcoming-matches-heading" className="sr-only">
-          {t('emptyState')}
-        </h2>
-        <p className="rounded-md border border-dashed border-gray-300 px-6 py-10 text-center text-base text-gray-600">
-          {t('emptyState')}
-        </p>
-      </section>
-
-      {/* T058 (US5) attachment point — wrap the above tree in <DashboardClient>
-          and mount <WelcomeModal /> gated on welcome_dismissed_at === null. */}
-    </main>
+        <section className="mt-10" aria-labelledby="upcoming-matches-heading">
+          <h2 id="upcoming-matches-heading" className="sr-only">
+            {t('emptyState')}
+          </h2>
+          <p className="rounded-md border border-dashed border-gray-300 px-6 py-10 text-center text-base text-gray-600">
+            {t('emptyState')}
+          </p>
+        </section>
+      </main>
+    </DashboardClient>
   );
 }

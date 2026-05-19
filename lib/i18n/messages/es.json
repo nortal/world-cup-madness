@@ -13,6 +13,17 @@
     "emptyState": "Aún no hay partidos próximos. El calendario aparecerá aquí cuando el torneo esté confirmado.",
     "adminNavLabel": "Consola de administración"
   },
+  "welcome": {
+    "title": "Bienvenido a World Cup Madness",
+    "intro": "Así funciona el torneo.",
+    "scoringExact": "Marcador exacto: 10 puntos por partido",
+    "scoringOutcome": "Solo resultado correcto (victoria, derrota o empate): 5 puntos",
+    "scoringWrong": "Resultado incorrecto: 0 puntos",
+    "scoringFinal": "Pronósticos finales (campeón, subcampeón, goleador, mejor jugador): 20 puntos cada uno",
+    "lockWindow": "Los pronósticos de partidos se bloquean 60 minutos antes del inicio.",
+    "deadline": "Los pronósticos finales se bloquean al inicio del primer partido del torneo.",
+    "gotIt": "Entendido"
+  },
   "accessDenied": {
     "heading": "Este torneo es para colaboradores de Nortal",
     "body": "El inicio de sesión fue rechazado porque tu cuenta de Microsoft no pertenece al tenant de Nortal en Entra.",

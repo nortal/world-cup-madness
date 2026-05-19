@@ -13,6 +13,17 @@
     "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado.",
     "adminNavLabel": "Console de administração"
   },
+  "welcome": {
+    "title": "Bem-vindo ao World Cup Madness",
+    "intro": "Veja como o bolão funciona.",
+    "scoringExact": "Placar exato: 10 pontos por jogo",
+    "scoringOutcome": "Apenas o resultado correto (vitória, derrota ou empate): 5 pontos",
+    "scoringWrong": "Resultado errado: 0 pontos",
+    "scoringFinal": "Palpites finais (campeão, vice-campeão, artilheiro, melhor jogador): 20 pontos cada",
+    "lockWindow": "Os palpites de jogos são bloqueados 60 minutos antes do pontapé inicial.",
+    "deadline": "Os palpites finais são bloqueados no primeiro pontapé inicial do torneio.",
+    "gotIt": "Entendi"
+  },
   "accessDenied": {
     "heading": "Este torneio é para colaboradores da Nortal",
     "body": "O login foi recusado porque sua conta Microsoft não pertence ao tenant da Nortal no Entra.",

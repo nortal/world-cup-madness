@@ -149,11 +149,11 @@
 
 **Covers**: FR-A3, NFR-A4.
 
-- [ ] T057 [US5] WelcomeModal Client Component at `components/auth/WelcomeModal.tsx`: focus trap, Esc to close, ARIA `role="dialog"` + `aria-labelledby` + `aria-modal`, "Got it" button calls `supabase.rpc('dismiss_welcome')` then closes locally; uses next-intl `t('welcome.title')` etc.
-- [ ] T058 [US5] Update dashboard `app/(participant)/dashboard/page.tsx` (modified from T040): pass `is_first_login` (derived from `welcome_dismissed_at IS NULL`) to a Client Component wrapper `<DashboardClient>` that conditionally mounts `<WelcomeModal />` on first render
-- [ ] T059 [US5] [P] Add en/es/pt-BR translation keys for welcome modal (title, scoring summary 4 lines, lock-window line, deadline line, "Got it" CTA) to `lib/i18n/messages/{en,es,pt-BR}.json`
-- [ ] T060 [US5] [P] Playwright test `e2e/tests/welcome-modal-cross-device.spec.ts` (TC-12): sign in as new user, dismiss modal, verify `welcome_dismissed_at` set in DB; sign out, sign back in in a fresh browser context → assert modal does NOT appear
-- [ ] T061 [US5] [P] Playwright test `e2e/tests/welcome-modal-a11y.spec.ts` (NFR-A4): @axe-core/playwright audit on dashboard with welcome modal open + assert keyboard navigation (Tab traps focus inside modal, Esc dismisses)
+- [x] T057 [US5] WelcomeModal Client Component at `components/auth/WelcomeModal.tsx`: focus trap, Esc to close, ARIA `role="dialog"` + `aria-labelledby` + `aria-modal`, "Got it" button calls `supabase.rpc('dismiss_welcome')` then closes locally; uses next-intl `t('welcome.title')` etc.
+- [x] T058 [US5] Update dashboard `app/(participant)/dashboard/page.tsx` (modified from T040): pass `is_first_login` (derived from `welcome_dismissed_at IS NULL`) to a Client Component wrapper `<DashboardClient>` that conditionally mounts `<WelcomeModal />` on first render
+- [x] T059 [US5] [P] Add en/es/pt-BR translation keys for welcome modal (title, scoring summary 4 lines, lock-window line, deadline line, "Got it" CTA) to `lib/i18n/messages/{en,es,pt-BR}.json`
+- [x] T060 [US5] [P] Playwright test `e2e/tests/welcome-modal-cross-device.spec.ts` (TC-12): sign in as new user, dismiss modal, verify `welcome_dismissed_at` set in DB; sign out, sign back in in a fresh browser context → assert modal does NOT appear
+- [x] T061 [US5] [P] Playwright test `e2e/tests/welcome-modal-a11y.spec.ts` (NFR-A4): @axe-core/playwright audit on dashboard with welcome modal open + assert keyboard navigation (Tab traps focus inside modal, Esc dismisses)
 
 ---
 

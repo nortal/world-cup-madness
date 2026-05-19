@@ -13,6 +13,17 @@
     "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized.",
     "adminNavLabel": "Admin console"
   },
+  "welcome": {
+    "title": "Welcome to World Cup Madness",
+    "intro": "Here's how the pool works.",
+    "scoringExact": "Exact score: 10 points per match",
+    "scoringOutcome": "Correct outcome only (win, loss, or draw): 5 points",
+    "scoringWrong": "Wrong outcome: 0 points",
+    "scoringFinal": "Final predictions (champion, runner-up, top scorer, best player): 20 points each",
+    "lockWindow": "Match predictions lock 60 minutes before kickoff.",
+    "deadline": "Final predictions lock at the first tournament kickoff.",
+    "gotIt": "Got it"
+  },
   "accessDenied": {
     "heading": "This pool is for Nortal collaborators",
     "body": "Sign-in was rejected because your Microsoft account is not in the Nortal Entra tenant.",
