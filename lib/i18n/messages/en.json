@@ -17,5 +17,12 @@
     "body": "Sign-in was rejected because your Microsoft account is not in the Nortal Entra tenant.",
     "retryLabel": "Sign in with a different account",
     "contact": "If you believe this is a mistake, please contact your tournament administrator."
+  },
+  "authError": {
+    "heading": "Sign-in didn't complete",
+    "body": "Something interrupted sign-in. This is usually temporary — please try again.",
+    "retryLabel": "Retry sign-in",
+    "contact": "If the problem persists, please contact your tournament administrator.",
+    "statusLinkLabel": "Check service status"
   }
 }

@@ -17,5 +17,12 @@
     "body": "El inicio de sesión fue rechazado porque tu cuenta de Microsoft no pertenece al tenant de Nortal en Entra.",
     "retryLabel": "Iniciar sesión con otra cuenta",
     "contact": "Si crees que esto es un error, por favor contacta al administrador del torneo."
+  },
+  "authError": {
+    "heading": "El inicio de sesión no se completó",
+    "body": "Algo interrumpió el inicio de sesión. Esto suele ser temporal — por favor, inténtalo de nuevo.",
+    "retryLabel": "Reintentar inicio de sesión",
+    "contact": "Si el problema persiste, por favor contacta al administrador del torneo.",
+    "statusLinkLabel": "Ver estado del servicio"
   }
 }
