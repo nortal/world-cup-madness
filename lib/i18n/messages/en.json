@@ -24,6 +24,18 @@
     "deadline": "Final predictions lock at the first tournament kickoff.",
     "gotIt": "Got it"
   },
+  "profile": {
+    "heading": "Your profile",
+    "emailLabel": "Email",
+    "displayNameLabel": "Display name",
+    "saveButton": "Save",
+    "savingButton": "Saving…",
+    "successToast": "Display name updated.",
+    "errorEmpty": "Display name cannot be empty.",
+    "errorTooLong": "Display name must be 100 characters or fewer.",
+    "errorNotFound": "Your participant account could not be located. Please sign out and back in.",
+    "errorGeneric": "Could not update display name. Please try again."
+  },
   "accessDenied": {
     "heading": "This pool is for Nortal collaborators",
     "body": "Sign-in was rejected because your Microsoft account is not in the Nortal Entra tenant.",

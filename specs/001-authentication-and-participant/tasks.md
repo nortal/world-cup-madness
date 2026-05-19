@@ -165,11 +165,11 @@
 
 **Covers**: FR-A2.
 
-- [ ] T062 [US6] Profile page at `app/(participant)/profile/page.tsx` (Server Component): fetch current `display_name` and `email`, render `<DisplayNameForm initialValue={displayName} />`
-- [ ] T063 [US6] [P] Display-name edit form at `components/profile/DisplayNameForm.tsx` (Client Component): controlled input (1–100 chars validation client-side), Submit calls `supabase.rpc('update_display_name', { new_name: value })`, optimistic UI update, error toast on `check_violation` / `no_data_found`
-- [ ] T064 [US6] [P] Add en/es/pt-BR translation keys for profile page heading + form labels + validation errors + success toast to `lib/i18n/messages/{en,es,pt-BR}.json`
-- [ ] T065 [US6] [P] Playwright test `e2e/tests/profile-edit-display-name.spec.ts` (TC-4): sign in, navigate to `/profile`, change display_name, submit → assert DB row updated, audit_log has `participant.updated` with old/new value, dashboard greeting reflects new name
-- [ ] T066 [US6] [P] Playwright test `e2e/tests/email-case-insensitive.spec.ts` (TC-13): JWT-inject `Mike@Nortal.com` → assert single row created with canonical `mike@nortal.com`; JWT-inject `MIKE@NORTAL.COM` for the same `oid` → assert no new row created
+- [x] T062 [US6] Profile page at `app/(participant)/profile/page.tsx` (Server Component): fetch current `display_name` and `email`, render `<DisplayNameForm initialValue={displayName} />`
+- [x] T063 [US6] [P] Display-name edit form at `components/profile/DisplayNameForm.tsx` (Client Component): controlled input (1–100 chars validation client-side), Submit calls `supabase.rpc('update_display_name', { new_name: value })`, optimistic UI update, error toast on `check_violation` / `no_data_found`
+- [x] T064 [US6] [P] Add en/es/pt-BR translation keys for profile page heading + form labels + validation errors + success toast to `lib/i18n/messages/{en,es,pt-BR}.json`
+- [x] T065 [US6] [P] Playwright test `e2e/tests/profile-edit-display-name.spec.ts` (TC-4): sign in, navigate to `/profile`, change display_name, submit → assert DB row updated, audit_log has `participant.updated` with old/new value, dashboard greeting reflects new name
+- [x] T066 [US6] [P] Playwright test `e2e/tests/email-case-insensitive.spec.ts` (TC-13): JWT-inject `Mike@Nortal.com` → assert single row created with canonical `mike@nortal.com`; JWT-inject `MIKE@NORTAL.COM` for the same `oid` → assert no new row created
 
 ---
 

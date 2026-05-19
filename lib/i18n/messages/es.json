@@ -24,6 +24,18 @@
     "deadline": "Los pronósticos finales se bloquean al inicio del primer partido del torneo.",
     "gotIt": "Entendido"
   },
+  "profile": {
+    "heading": "Tu perfil",
+    "emailLabel": "Correo electrónico",
+    "displayNameLabel": "Nombre para mostrar",
+    "saveButton": "Guardar",
+    "savingButton": "Guardando…",
+    "successToast": "Nombre para mostrar actualizado.",
+    "errorEmpty": "El nombre para mostrar no puede estar vacío.",
+    "errorTooLong": "El nombre para mostrar debe tener 100 caracteres o menos.",
+    "errorNotFound": "No se pudo encontrar tu cuenta de participante. Por favor, cierra sesión y vuelve a iniciar.",
+    "errorGeneric": "No se pudo actualizar el nombre para mostrar. Por favor, inténtalo de nuevo."
+  },
   "accessDenied": {
     "heading": "Este torneo es para colaboradores de Nortal",
     "body": "El inicio de sesión fue rechazado porque tu cuenta de Microsoft no pertenece al tenant de Nortal en Entra.",

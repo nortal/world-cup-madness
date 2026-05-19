@@ -24,6 +24,18 @@
     "deadline": "Os palpites finais são bloqueados no primeiro pontapé inicial do torneio.",
     "gotIt": "Entendi"
   },
+  "profile": {
+    "heading": "Seu perfil",
+    "emailLabel": "E-mail",
+    "displayNameLabel": "Nome de exibição",
+    "saveButton": "Salvar",
+    "savingButton": "Salvando…",
+    "successToast": "Nome de exibição atualizado.",
+    "errorEmpty": "O nome de exibição não pode ficar vazio.",
+    "errorTooLong": "O nome de exibição deve ter 100 caracteres ou menos.",
+    "errorNotFound": "Não foi possível localizar sua conta de participante. Por favor, saia e entre novamente.",
+    "errorGeneric": "Não foi possível atualizar o nome de exibição. Por favor, tente novamente."
+  },
   "accessDenied": {
     "heading": "Este torneio é para colaboradores da Nortal",
     "body": "O login foi recusado porque sua conta Microsoft não pertence ao tenant da Nortal no Entra.",
