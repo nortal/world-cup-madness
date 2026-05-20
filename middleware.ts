@@ -1,56 +1,91 @@
-import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, type NextResponse } from 'next/server';
 
-import { defaultLocale, locales, LOCALE_COOKIE } from './lib/i18n/config';
+import { defaultLocale, isLocale, LOCALE_COOKIE, locales, type Locale } from './lib/i18n/config';
 import { updateSession } from './lib/supabase/middleware';
 
 /**
- * next-intl middleware: resolves locale from the `Accept-Language` header (and
- * existing `NEXT_LOCALE` cookie) and writes the resolved locale back to the
- * cookie. `localePrefix: 'never'` means URLs do NOT carry a locale prefix
- * (ADR-008 / FR-A8). `localeDetection: true` enables Accept-Language sniffing
- * (NFR-A5).
- */
-const intlMiddleware = createMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: 'never',
-  localeDetection: true,
-});
-
-/**
- * Top-level middleware that chains next-intl Accept-Language detection (T028)
- * with Supabase session refresh (T026). Both must run on every matched
- * request:
- *   - next-intl writes the `NEXT_LOCALE` cookie so Server Components load the
- *     correct message catalog.
- *   - Supabase refreshes the auth session so downstream Server Components and
- *     Route Handlers see a non-expired user.
+ * Resolve the best locale for this request from cookie + Accept-Language.
  *
- * Merge strategy: use the Supabase response as the base (it carries the
- * rotated auth cookies AND re-builds itself after cookie sink writes — see
- * `lib/supabase/middleware.ts` lines 36–48). Then copy next-intl's
- * `NEXT_LOCALE` cookie (plus any other Set-Cookie entries it emitted) onto
- * the base. Using the supabase response as the base preserves the most
- * security-critical cookies (the auth tokens) by default.
+ * Precedence:
+ *   1. An existing valid `NEXT_LOCALE` cookie (sticky once the user lands on
+ *      a locale — they keep it across requests without re-running detection).
+ *   2. The first Accept-Language tag whose primary subtag matches one of our
+ *      supported locales. Exact match wins (`pt-BR` → `pt-BR`); otherwise
+ *      base-language match (`es-ES` → `es`); special case `pt` (with no
+ *      region subtag) → `pt-BR` since that is our only Portuguese variant.
+ *   3. `defaultLocale` (English) as the fallback for any unsupported or
+ *      missing input (NFR-A5).
+ *
+ * Why we hand-roll this instead of using `next-intl/middleware`:
+ * `createMiddleware({ localePrefix: 'never' })` still REWRITES every request
+ * internally to `/[locale]/...` so Next.js can match it from a `[locale]`
+ * folder. Our pages live directly at `app/(public)/`, `app/(participant)/`,
+ * `app/auth/...` with no locale segment per ADR-008 (clean URLs without a
+ * locale prefix). With next-intl in charge, every non-default-locale request
+ * 404'd. This handler does the detection without rewriting the URL — see
+ * commit message for the NFR-A5 regression history (2026-05-19).
  */
-export default async function middleware(request: NextRequest): Promise<NextResponse> {
-  const intlResponse = intlMiddleware(request);
-  const supabaseResponse = await updateSession(request);
+function resolveLocale(request: NextRequest): Locale {
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  if (isLocale(cookieLocale)) return cookieLocale;
 
-  // Copy every cookie next-intl set (typically just NEXT_LOCALE) onto the
-  // Supabase response so the browser receives both auth and locale cookies.
-  intlResponse.cookies.getAll().forEach((cookie) => {
-    supabaseResponse.cookies.set(cookie.name, cookie.value);
-  });
+  const acceptLanguage = request.headers.get('accept-language');
+  if (!acceptLanguage) return defaultLocale;
 
-  // Defensive fallback: if next-intl did not set the locale cookie for any
-  // reason, seed it with the default so Server Components have a stable read.
-  if (!supabaseResponse.cookies.get(LOCALE_COOKIE)) {
-    supabaseResponse.cookies.set(LOCALE_COOKIE, defaultLocale);
+  // Parse `en-US,en;q=0.9,es;q=0.8` into a q-ordered list of language tags.
+  const tags = acceptLanguage
+    .split(',')
+    .map((entry) => {
+      const [rawTag, ...params] = entry.trim().split(';');
+      const tag = rawTag.trim();
+      const qParam = params.find((p) => p.trim().startsWith('q='));
+      const q = qParam ? Number.parseFloat(qParam.split('=')[1]) : 1;
+      return { tag, q: Number.isFinite(q) ? q : 0 };
+    })
+    .filter((entry) => entry.tag.length > 0)
+    .sort((a, b) => b.q - a.q);
+
+  for (const { tag } of tags) {
+    const normalized = tag.toLowerCase();
+
+    // Exact match first — `pt-BR` matches our `pt-BR` (case-insensitive).
+    const exact = locales.find((l) => l.toLowerCase() === normalized);
+    if (exact) return exact;
+
+    // Base-language fallback: `es-ES` → `es`, `en-US` → `en`. Take the part
+    // before the first `-`.
+    const base = normalized.split('-')[0];
+    const baseMatch = locales.find((l) => l.toLowerCase() === base);
+    if (baseMatch) return baseMatch;
+
+    // Special case: bare `pt` (no region) → `pt-BR` (our only PT variant).
+    if (base === 'pt') return 'pt-BR';
   }
 
-  return supabaseResponse;
+  return defaultLocale;
+}
+
+/**
+ * Top-level middleware: runs Accept-Language detection (NFR-A5 / FR-A8) and
+ * Supabase session refresh (T026) on every matched request.
+ *
+ * Order:
+ *   1. Refresh the Supabase session first — `updateSession` rotates auth
+ *      cookies onto its response. We use that as the base response so the
+ *      browser persists the new tokens.
+ *   2. Resolve the locale from cookie + Accept-Language and stamp the
+ *      `NEXT_LOCALE` cookie. `getRequestConfig` (`lib/i18n/config.ts`) reads
+ *      this cookie on the same request via `next/headers#cookies()`, so the
+ *      resolved locale takes effect immediately — no second-request delay.
+ *
+ * The cookie write uses `Path: '/'` so every Server Component sees the same
+ * value regardless of route depth.
+ */
+export default async function middleware(request: NextRequest): Promise<NextResponse> {
+  const response = await updateSession(request);
+  const locale = resolveLocale(request);
+  response.cookies.set(LOCALE_COOKIE, locale, { path: '/' });
+  return response;
 }
 
 /**

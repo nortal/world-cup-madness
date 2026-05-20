@@ -198,8 +198,8 @@
 
 **Covers**: FR-A8, NFR-A5.
 
-- [ ] T073 [US8] Verify all en/es/pt-BR translation keys are populated for surfaces from US1-US7 (review `lib/i18n/messages/{en,es,pt-BR}.json` against the surface list in FR-A8); fix any missing keys
-- [ ] T074 [US8] [P] Playwright test `e2e/tests/i18n-locale-detection.spec.ts` (NFR-A5): for each `Accept-Language` value `en`, `es`, `pt-BR`, navigate to `/`, `/access-denied`, `/auth-error`, `/privacy`, `/dashboard` (signed in), `/profile` (signed in) → assert content matches expected locale; navigate with `Accept-Language: ja` → assert English fallback
+- [x] T073 [US8] Verify all en/es/pt-BR translation keys are populated for surfaces from US1-US7 (review `lib/i18n/messages/{en,es,pt-BR}.json` against the surface list in FR-A8); fix any missing keys
+- [x] T074 [US8] [P] Playwright test `e2e/tests/i18n-locale-detection.spec.ts` (NFR-A5): for each `Accept-Language` value `en`, `es`, `pt-BR`, navigate to `/`, `/access-denied`, `/auth-error`, `/privacy`, `/dashboard` (signed in), `/profile` (signed in) → assert content matches expected locale; navigate with `Accept-Language: ja` → assert English fallback
 
 ---
 

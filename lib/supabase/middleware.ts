@@ -9,7 +9,8 @@ import type { Database } from './database.types';
  * the new token) and the outgoing response (so the browser stores it).
  *
  * Consumed by the top-level `middleware.ts` (T032), which chains this helper
- * with next-intl Accept-Language detection.
+ * with a hand-rolled Accept-Language detector. The locale wiring lives in
+ * `middleware.ts` — this helper is intentionally narrow.
  *
  * IMPORTANT: do NOT add logic between `createServerClient(...)` and
  * `supabase.auth.getUser()` — the `getUser()` call is what actually triggers
