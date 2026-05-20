@@ -113,7 +113,7 @@ test.describe('welcome modal — NFR-A4 accessibility', () => {
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });
 
-  test('welcome modal traps focus on Got it and Esc dismisses + persists', async ({ page }) => {
+  test('welcome modal traps focus across Got it + Learn more, and Esc dismisses + persists', async ({ page }) => {
     // Same provisioning flow as the audit test — keeping it inline (rather
     // than hoisted into a fixture) preserves the 1:1 mapping with
     // `auth-eligible-new-user.spec.ts` and keeps each spec readable on its
@@ -146,6 +146,7 @@ test.describe('welcome modal — NFR-A4 accessibility', () => {
     await expect(dialog).toBeVisible();
 
     const gotIt = page.getByRole('button', { name: 'Got it' });
+    const learnMore = dialog.getByRole('link', { name: 'Learn more' });
 
     // Focus-on-mount: WelcomeModal calls `.focus()` on the Got it button in
     // its mount effect. This is the entry condition for the focus trap —
@@ -153,17 +154,31 @@ test.describe('welcome modal — NFR-A4 accessibility', () => {
     // dialog when it opens (NFR-A4 announce-on-open contract).
     await expect(gotIt).toBeFocused();
 
-    // Forward Tab cycle: the dialog currently has exactly one focusable
-    // descendant (the Got it button). The document-level keydown listener
-    // in `WelcomeModal.tsx` queries focusable descendants and re-targets
-    // focus to the first one when reaching the end — so a forward Tab on
-    // the only focusable element must leave focus on that same element
-    // (NOT escape to the URL bar or the page body behind the dialog).
+    // After T070 the dialog has TWO focusable descendants: Got it (first
+    // declared in JSX… but rendered AFTER the Learn more link in DOM order
+    // because the privacy summary paragraph sits before the action row).
+    // `querySelectorAll('a[href], button:not([disabled])')` walks in DOM
+    // order, so the focus trap treats the Learn more link as `first` and
+    // Got it as `last`. The trap pinpoints these endpoints to redirect Tab
+    // / Shift+Tab; intermediate Tabs use the browser's native focus
+    // movement (link ↔ button). Assert both directions stay inside the
+    // dialog by cycling once around.
+
+    // Forward Tab from Got it (last focusable) → wraps to Learn more (first
+    // focusable) per the trap's end-of-cycle re-target.
+    await page.keyboard.press('Tab');
+    await expect(learnMore).toBeFocused();
+
+    // Forward Tab from Learn more → native focus moves to Got it.
     await page.keyboard.press('Tab');
     await expect(gotIt).toBeFocused();
 
-    // Backward Shift+Tab cycle: symmetric to the forward case — must stay
-    // on Got it rather than escaping the dialog backwards.
+    // Backward Shift+Tab from Got it → native focus moves to Learn more.
+    await page.keyboard.press('Shift+Tab');
+    await expect(learnMore).toBeFocused();
+
+    // Backward Shift+Tab from Learn more (first focusable) → wraps to Got
+    // it (last focusable) per the trap's start-of-cycle re-target.
     await page.keyboard.press('Shift+Tab');
     await expect(gotIt).toBeFocused();
 

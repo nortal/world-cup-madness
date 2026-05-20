@@ -48,5 +48,23 @@
     "retryLabel": "Reintentar inicio de sesión",
     "contact": "Si el problema persiste, por favor contacta al administrador del torneo.",
     "statusLinkLabel": "Ver estado del servicio"
+  },
+  "privacy": {
+    "linkLabel": "Aviso de privacidad",
+    "heading": "Aviso de privacidad",
+    "intro": "World Cup Madness es un torneo interno de pronósticos de Nortal. Esto es lo que recopilamos, por qué y quién puede verlo.",
+    "dataCollectedHeading": "Datos que recopilamos",
+    "dataCollectedBody": "Tu dirección de correo corporativo y tu nombre para mostrar de Microsoft. Recibimos ambos desde tu cuenta de trabajo de Microsoft cuando inicias sesión. No recopilamos nada más de tu perfil de Microsoft.",
+    "purposeHeading": "Por qué los recopilamos",
+    "purposeBody": "El correo se usa para verificar que eres un colaborador elegible de Nortal. El nombre para mostrar aparece en la tabla de clasificación para que tus colegas puedan reconocerte. Ambos, junto con los eventos de inicio de sesión y edición de pronósticos, se registran en un registro de auditoría para que el resultado del torneo pueda revisarse.",
+    "audienceHeading": "Quién puede ver tus datos",
+    "audienceBody": "Otros participantes ven tu nombre para mostrar y tus puntos en la tabla de clasificación. Los administradores del torneo pueden ver tu dirección de correo con fines de soporte y elegibilidad. Ningún servicio externo recibe tus datos.",
+    "legalBasisHeading": "Base legal",
+    "legalBasisBody": "Procesamos estos datos bajo interés legítimo en el contexto de tu empleo en Nortal. La participación en el torneo es voluntaria; no hay un paso de consentimiento aparte para el MVP.",
+    "retentionHeading": "Cuánto tiempo conservamos tus datos",
+    "retentionBody": "El período de retención de los pronósticos, puntuaciones y datos de auditoría tras la conclusión del torneo será establecido por Privacidad y Legal de Nortal antes del lanzamiento y se añadirá aquí.",
+    "backLabel": "Volver al inicio de sesión",
+    "welcomeSummary": "Recopilamos tu correo corporativo y tu nombre para mostrar para verificar la elegibilidad y mostrar tu nombre en la tabla de clasificación.",
+    "learnMore": "Más información"
   }
 }

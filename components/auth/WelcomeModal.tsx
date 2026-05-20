@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
+import PrivacyLink from '@/components/auth/PrivacyLink';
 import { createClient } from '@/lib/supabase/client';
 
 /**
@@ -49,6 +50,10 @@ type WelcomeModalProps = Record<string, never>;
 
 export default function WelcomeModal(_props: WelcomeModalProps = {} as WelcomeModalProps) {
   const t = useTranslations('welcome');
+  // Separate hook for the privacy namespace — the welcome summary line
+  // (FR-A3 (e)) lives in `privacy.*` rather than `welcome.*` so the same
+  // string is reusable wherever a one-line privacy summary is needed.
+  const tPrivacy = useTranslations('privacy');
   const [isOpen, setIsOpen] = useState(true);
   const [isDismissing, setIsDismissing] = useState(false);
 
@@ -162,10 +167,14 @@ export default function WelcomeModal(_props: WelcomeModalProps = {} as WelcomeMo
         <p className="mt-4 text-sm text-gray-700">{t('lockWindow')}</p>
         <p className="mt-2 text-sm text-gray-700">{t('deadline')}</p>
 
-        {/* T070 (US7) attachment point — insert "Learn more" privacy Link here.
-            The focus trap above queries focusable descendants on each Tab
-            press, so a Link added here will be trapped automatically without
-            further changes to this component. */}
+        {/* T070 (US7) — privacy summary + "Learn more" link (FR-A3 (e),
+            FR-A10 placement B). PrivacyLink in `inline` variant resolves
+            to the localized "Learn more" wording. The focus trap above
+            queries focusable descendants on each Tab press, so this new
+            Link is picked up by the trap without further wiring. */}
+        <p className="mt-4 text-sm text-gray-700">
+          {tPrivacy('welcomeSummary')} <PrivacyLink variant="inline" />
+        </p>
 
         <div className="mt-6 flex justify-end">
           <button

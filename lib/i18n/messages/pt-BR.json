@@ -48,5 +48,23 @@
     "retryLabel": "Tentar login novamente",
     "contact": "Se o problema persistir, entre em contato com o administrador do torneio.",
     "statusLinkLabel": "Ver status do serviço"
+  },
+  "privacy": {
+    "linkLabel": "Aviso de privacidade",
+    "heading": "Aviso de privacidade",
+    "intro": "World Cup Madness é um bolão interno da Nortal. Veja o que coletamos, por quê e quem pode ver.",
+    "dataCollectedHeading": "Dados que coletamos",
+    "dataCollectedBody": "Seu endereço de e-mail corporativo e seu nome de exibição da Microsoft. Recebemos ambos da sua conta corporativa Microsoft quando você entra. Não coletamos mais nada do seu perfil Microsoft.",
+    "purposeHeading": "Por que coletamos",
+    "purposeBody": "O e-mail é usado para verificar se você é um colaborador elegível da Nortal. O nome de exibição aparece na classificação para que seus colegas possam reconhecê-lo. Ambos, junto com os eventos de login e de edição de palpites, são registrados em um log de auditoria para que o resultado do torneio possa ser revisado.",
+    "audienceHeading": "Quem pode ver seus dados",
+    "audienceBody": "Outros participantes veem seu nome de exibição e seus pontos na classificação. Os administradores do torneio podem ver seu endereço de e-mail para fins de suporte e elegibilidade. Nenhum serviço externo recebe seus dados.",
+    "legalBasisHeading": "Base legal",
+    "legalBasisBody": "Processamos esses dados com base no interesse legítimo, no contexto do seu vínculo empregatício com a Nortal. A participação no bolão é voluntária; não há etapa de consentimento separada para o MVP.",
+    "retentionHeading": "Por quanto tempo guardamos seus dados",
+    "retentionBody": "O período de retenção dos palpites, pontuações e dados de auditoria após o término do torneio será definido pelas equipes de Privacidade e Jurídico da Nortal antes do lançamento e adicionado aqui.",
+    "backLabel": "Voltar para o login",
+    "welcomeSummary": "Coletamos seu e-mail corporativo e seu nome de exibição para verificar a elegibilidade e mostrar seu nome na classificação.",
+    "learnMore": "Saiba mais"
   }
 }
