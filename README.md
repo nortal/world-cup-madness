@@ -126,3 +126,54 @@ This repository is configured for Claude Code with:
 - `INDEX.md` - Repository structure for context
 
 Agents are instructed to read these files first in any session.
+
+---
+
+## Feature 001 — Authentication and participant provisioning
+
+**Spec:** [`specs/001-authentication-and-participant/`](specs/001-authentication-and-participant/) (FRs, TCs, ADRs)
+**Setup guide:** [`specs/001-authentication-and-participant/quickstart.md`](specs/001-authentication-and-participant/quickstart.md) — step-by-step first-run instructions
+**DoD report:** [`specs/001-authentication-and-participant/dod-verification.md`](specs/001-authentication-and-participant/dod-verification.md)
+
+### Required environment variables
+
+Copy `.env.example` to `.env.local` and fill from `npx supabase start` output (local) or your Supabase / Vercel project settings (deployed).
+
+| Variable | Where it goes | Sourced from |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Server + browser bundles | `npx supabase status -o env` (`API_URL`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Server + browser bundles | `npx supabase status -o env` (`ANON_KEY`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** — never ship to client | `npx supabase status -o env` (`SERVICE_ROLE_KEY`) |
+| `AUTH_AZURE_CLIENT_ID` | Supabase Auth provider config | Microsoft Entra app registration (Nortal IT) |
+| `AUTH_AZURE_SECRET` | Supabase Auth provider config | Microsoft Entra app registration (Nortal IT) |
+| `AUTH_AZURE_TENANT_ID` | Local dev: matches `tournament_config.nortal_tenant_id`; prod: Nortal tenant UUID | Nortal IT |
+
+### Local test commands
+
+```bash
+# Unit (pure functions)
+npm test
+
+# E2E (chromium + accessibility projects)
+npm run test:e2e
+npm run test:a11y     # accessibility-only subset
+
+# Database (pgTAP — needs `npx supabase start` first)
+npx supabase db test test/pgtap/*.sql
+
+# Static checks
+npm run type-check
+npm run lint
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `npm run dev` returns 404 on every page including `/` | Stale `.next` cache from a Next or middleware change | `rm -rf .next && npm run dev` |
+| Playwright timeout: `webServer didn't start within 120000ms` | Lingering `next dev` process holding port 3000 | `pkill -9 -f "next dev" && pkill -9 -f next-server`, then retry |
+| `Supabase: failed to inspect container health` | Colima / Docker daemon not running | `colima start --cpu 4 --memory 4` (macOS); excludes `vector` per local convention: `npx supabase start --exclude vector` |
+| pgTAP `Files=0, Tests=0, Result: NOTESTS` | Default test path doesn't pick up `test/pgtap/` | Pass paths explicitly: `npx supabase db test test/pgtap/*.sql` |
+| Spanish / Portuguese sign-in shows English text | Stale `NEXT_LOCALE` cookie from a previous session | Clear browser cookies for `localhost:3000`; the middleware re-detects from `Accept-Language` on next request |
+| `signInAs: admin.createUser failed for ...: Unable to validate email address` | Whitespace or invalid characters in test email | Supabase Auth's format validator rejects whitespace; use a clean email per the `e2e/fixtures/auth.ts` defaults |
+| `infinite recursion detected in policy for relation 'participants'` | Stale local schema (pre-migration 0010) | `npx supabase db reset` — migration 0010 introduced the `is_admin_user()` SECURITY DEFINER helper that breaks the recursion |

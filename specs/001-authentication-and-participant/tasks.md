@@ -205,12 +205,12 @@
 
 ## Final Phase: Polish & Cross-Cutting
 
-- [ ] T075 [P] Run accessibility audit Playwright project against all pages: `npx playwright test --project=accessibility` and resolve any axe-core violations
-- [ ] T076 [P] Run full test suite: `npx supabase db test` (pgTAP) + `npx playwright test` (E2E) + `npm test` (unit / RTL) + `npx tsc --noEmit` (type-check) + `npm run lint`. Test output MUST be pristine per universal constitution §4
-- [ ] T077 Verify `spec.md` Definition of Done items: all 13 TCs pass, audit search returns expected actions for all five action types, FC-1 (fail-closed) verified via T020, FC-2 (no row for ineligible) verified via T020 + T047, FC-3 (no auto-retry) verified via T053 + manual code review
-- [ ] T078 [P] Update `project-repos/world-cup-madness/README.md` with auth-feature setup instructions: link to `quickstart.md`, env-var summary, troubleshooting matrix
-- [ ] T079 [P] Stack constitution post-implementation review — verify `.ai_project_memory/constitution-frontend.md` and `.ai_project_memory/constitution-backend.md` reflect any newly-discovered libraries; update if needed
-- [ ] T080 [P] Update `.ai/knowledge/decisions.md` with any new ADRs surfaced during implementation (none expected; revisit only if a major call had to be made)
+- [x] T075 [P] Run accessibility audit Playwright project against all pages: `npx playwright test --project=accessibility` and resolve any axe-core violations
+- [x] T076 [P] Run full test suite: `npx supabase db test` (pgTAP) + `npx playwright test` (E2E) + `npm test` (unit / RTL) + `npx tsc --noEmit` (type-check) + `npm run lint`. Test output MUST be pristine per universal constitution §4
+- [x] T077 Verify `spec.md` Definition of Done items: all 13 TCs pass, audit search returns expected actions for all five action types, FC-1 (fail-closed) verified via T020, FC-2 (no row for ineligible) verified via T020 + T047, FC-3 (no auto-retry) verified via T053 + manual code review
+- [x] T078 [P] Update `project-repos/world-cup-madness/README.md` with auth-feature setup instructions: link to `quickstart.md`, env-var summary, troubleshooting matrix
+- [x] T079 [P] Stack constitution post-implementation review — verify `.ai_project_memory/constitution-frontend.md` and `.ai_project_memory/constitution-backend.md` reflect any newly-discovered libraries; update if needed
+- [x] T080 [P] Update `.ai/knowledge/decisions.md` with any new ADRs surfaced during implementation (none expected; revisit only if a major call had to be made)
 
 ---
 

@@ -1,33 +1,13 @@
 import { cookies } from 'next/headers';
 import { getRequestConfig } from 'next-intl/server';
 
-/**
- * Trilingual launch per ADR-008 / FR-A8: English, Spanish, Brazilian Portuguese.
- * Locale selection is driven by the browser `Accept-Language` header in the
- * top-level `middleware.ts` (T032); URLs do NOT carry a locale prefix.
- */
-export const locales = ['en', 'es', 'pt-BR'] as const;
+import { defaultLocale, isLocale, LOCALE_COOKIE, type Locale } from './locales';
 
-export type Locale = (typeof locales)[number];
-
-export const defaultLocale: Locale = 'en';
-
-/**
- * Locale cookie name. Written by the top-level middleware (T032) after
- * resolving the Accept-Language header; read here so server-rendered
- * messages match the locale the middleware picked. We use the same name
- * (`NEXT_LOCALE`) that next-intl uses by convention — Playwright tests and
- * future tooling that inspect the cookie still see the expected value.
- */
-export const LOCALE_COOKIE = 'NEXT_LOCALE';
-
-/**
- * Narrowing type guard. Exported so the middleware can validate a cookie
- * value (which arrives as `string | undefined`) before relying on it.
- */
-export function isLocale(value: string | null | undefined): value is Locale {
-  return value !== null && value !== undefined && (locales as readonly string[]).includes(value);
-}
+// Re-export pure primitives so existing callers can keep their import path.
+// New code can import directly from `./locales` to avoid pulling next-intl
+// and next/headers into a test context.
+export { defaultLocale, isLocale, LOCALE_COOKIE, locales } from './locales';
+export type { Locale } from './locales';
 
 /**
  * next-intl 4.x request loader. Reads the `NEXT_LOCALE` cookie that the

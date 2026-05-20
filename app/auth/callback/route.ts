@@ -98,7 +98,6 @@ async function recordCallbackProviderError(reason: 'callback.missing-code' | 'ca
     });
 
     if (rpcError !== null) {
-      // eslint-disable-next-line no-console -- structured log pairs with audit failure per Constitution §1.3
       console.error('auth/callback: record_auth_failure RPC returned error', {
         event: 'auth.provider-error.audit-failed',
         reason,
@@ -107,7 +106,6 @@ async function recordCallbackProviderError(reason: 'callback.missing-code' | 'ca
       });
     }
   } catch (auditError) {
-    // eslint-disable-next-line no-console -- structured log pairs with audit failure per Constitution §1.3
     console.error('auth/callback: record_auth_failure threw', {
       event: 'auth.provider-error.audit-threw',
       reason,
@@ -121,7 +119,6 @@ export async function GET(request: NextRequest) {
 
   if (code === null) {
     // No code param — Microsoft did not complete the OAuth flow (FR-A9 / TC-10).
-    // eslint-disable-next-line no-console -- structured log pairs with audit row per Constitution §1.3
     console.error('auth/callback: missing OAuth code query parameter', {
       event: 'auth.provider-error',
       reason: 'callback.missing-code',
@@ -150,7 +147,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (exchangeFailed) {
-    // eslint-disable-next-line no-console -- structured log pairs with audit row per Constitution §1.3
     console.error('auth/callback: exchangeCodeForSession failed', {
       event: 'auth.provider-error',
       reason: 'callback.exchange-failed',
@@ -168,7 +164,6 @@ export async function GET(request: NextRequest) {
     // is not covered by that audit, but it is also not a "provider error" in
     // the OAuth sense — we surface it as /auth-error and rely on Supabase
     // logs for observability. (Not in scope for T051.)
-    // eslint-disable-next-line no-console -- structured log per Constitution §1.3
     console.error('auth/callback: provision_participant_from_jwt RPC failed', {
       event: 'auth.provision.rpc-failed',
       message: rpcError.message,
@@ -178,7 +173,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isProvisionOutcome(data)) {
-    // eslint-disable-next-line no-console -- structured log per Constitution §1.3
     console.error('auth/callback: provision_participant_from_jwt returned unexpected shape', {
       event: 'auth.provision.unexpected-shape',
       received: typeof data,
