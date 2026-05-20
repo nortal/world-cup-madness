@@ -182,9 +182,9 @@
 **Covers**: FR-A10, FA-4.
 
 - [x] T067 [US7] `/privacy` page at `app/(public)/privacy/page.tsx` (Server Component): notice content per FR-A10 (data collected, purpose, audience, legal basis, retention placeholder pending Privacy/Legal-set value); semantic HTML headings; back-to-landing link
-- [x] T068 [US7] [P] PrivacyLink shared Client Component at `components/auth/PrivacyLink.tsx`: renders `<Link href="/privacy">{t('privacy.linkLabel')}</Link>`
+- [x] T068 [US7] [P] PrivacyLink shared Client Component at `components/auth/PrivacyLink.tsx`: renders `<Link href="/privacy">` with a `variant` prop selecting the label — `variant='footer'` (default) renders `t('privacy.linkLabel')` ("Privacy notice") for the landing footer; `variant='inline'` renders `t('privacy.learnMore')` ("Learn more") for the welcome-modal placement per FR-A3 (e)
 - [x] T069 [US7] Update landing page `app/(public)/page.tsx` (modified from T036): include `<PrivacyLink />` prominently in the page chrome (footer or below the sign-in button)
-- [x] T070 [US7] Update welcome modal `components/auth/WelcomeModal.tsx` (modified from T057): add 1-line privacy summary + "Learn more" `<PrivacyLink />` per FR-A3 (e) and FR-A10
+- [x] T070 [US7] Update welcome modal `components/auth/WelcomeModal.tsx` (modified from T057): add 1-line privacy summary + `<PrivacyLink variant="inline" />` per FR-A3 (e) and FR-A10 (renders as "Learn more")
 - [x] T071 [US7] [P] Add en/es/pt-BR translation keys for `/privacy` notice content + privacy-link label + welcome-modal privacy summary to `lib/i18n/messages/{en,es,pt-BR}.json`
 - [x] T072 [US7] [P] Playwright test `e2e/tests/privacy-notice-reachable.spec.ts` (TC-11): unauthenticated visit → click privacy link from landing → assert lands on `/privacy` with all required content sections; authenticated first-login → click "Learn more" in welcome modal → assert lands on `/privacy`
 

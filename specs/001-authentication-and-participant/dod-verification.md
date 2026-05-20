@@ -113,12 +113,13 @@ Combined Playwright run (`npx playwright test`) reports **36 passed**: 22 chromi
 - **FA-4** — Privacy / Legal sign-off on legitimate-interest basis (would surface as an OD-008 change if consent capture is required instead)
 - **Retention period** value — pending Privacy/Legal-set value per spec.md line 170; placeholder currently in `/privacy` body
 
-## Findings worth raising with the spec authors
+## Findings folded back into the spec / ADRs
 
-1. **TC-13 mechanism note**: spec text implies a DB trigger lowercases email, but the actual canonicalization happens at the Supabase Auth `auth.users` layer (lowercases on `createUser`). Trigger only trims. Observable behavior matches spec; mechanism is elsewhere. (Documented in `email-case-insensitive.spec.ts` header.)
-2. **TC-13 whitespace branch unreachable via OAuth**: Supabase Auth's email-format validator rejects `'  mike@nortal.com  '` at user-creation time. pgTAP 004 covers the trigger's whitespace branch via direct INSERTs; E2E covers only the case-change variant.
-3. **T070 / FR-A3(e) wording conflict** (resolved in implementation): T068 + T070 task wording uses `<PrivacyLink/>` which renders "Privacy notice", but FR-A3(e) calls for "Learn more" inside the modal. Resolved by giving PrivacyLink a `variant` prop that selects the label. Worth harmonizing T068/T070 wording with FR-A3 in a future spec edit.
-4. **next-intl `localePrefix: 'never'` is misleadingly named**: it still rewrites internally to `/[locale]/...`, requiring a `[locale]` folder structure. Our flat folder layout per ADR-008 caused every non-default-locale request to 404 silently — masked through US1-US7 because manual testing was English-only. Resolved by bypassing next-intl middleware entirely; hand-rolled Accept-Language detection in `middleware.ts`. ADR-008 should be amended with a note explaining the bypass.
+The implementation surfaced four findings that the source artifacts have been updated to reflect, so this report is consistent with the spec rather than carrying asterisks:
+
+1. **TC-13 mechanism note** — spec.md TC-13 now carries an "Implementation note" clarifying that lowercase storage is delivered by Supabase Auth's `auth.users.email` normalisation (the JWT arrives lowercase), with `citext` + trim trigger as defence in depth. Also notes that the whitespace-padded variant is unreachable through the OAuth flow because Supabase Auth's email-format validator rejects whitespace at `auth.admin.createUser` time — pgTAP `004_email_normalization.sql` covers the trigger's whitespace branch via direct INSERTs.
+2. **T068 / T070 / FR-A3(e) harmonisation** — tasks.md T068 and T070 now document the `variant` prop pattern explicitly (`variant='footer'` → "Privacy notice"; `variant='inline'` → "Learn more"). FR-A3 (e) and the task language are now aligned.
+3. **next-intl middleware bypass** — captured as ADR-013 in `.ai/knowledge/decisions.md` and as a stack-row note in `.ai_project_memory/constitution-frontend.md` §I.1. Future developers reading `package.json` will see the inline note explaining why `next-intl/middleware` is not imported.
 
 ---
 
