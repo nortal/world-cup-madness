@@ -94,6 +94,105 @@ export type Database = {
           },
         ]
       }
+      integration_runs: {
+        Row: {
+          action: string
+          error_message: string | null
+          finished_at: string | null
+          id: number
+          provider: string
+          records_processed: number
+          records_unchanged: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          action: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: number
+          provider: string
+          records_processed?: number
+          records_unchanged?: number
+          started_at?: string
+          status: string
+        }
+        Update: {
+          action?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: number
+          provider?: string
+          records_processed?: number
+          records_unchanged?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      matches: {
+        Row: {
+          away_team_id: string
+          created_at: string
+          group_label: string | null
+          home_team_id: string
+          id: string
+          kickoff_utc: string | null
+          last_synced_at: string
+          provider_id: number
+          score_away: number | null
+          score_home: number | null
+          stage: string
+          status: string
+          venue: string | null
+        }
+        Insert: {
+          away_team_id: string
+          created_at?: string
+          group_label?: string | null
+          home_team_id: string
+          id?: string
+          kickoff_utc?: string | null
+          last_synced_at?: string
+          provider_id: number
+          score_away?: number | null
+          score_home?: number | null
+          stage: string
+          status: string
+          venue?: string | null
+        }
+        Update: {
+          away_team_id?: string
+          created_at?: string
+          group_label?: string | null
+          home_team_id?: string
+          id?: string
+          kickoff_utc?: string | null
+          last_synced_at?: string
+          provider_id?: number
+          score_away?: number | null
+          score_home?: number | null
+          stage?: string
+          status?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_away_team_id_fkey"
+            columns: ["away_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_home_team_id_fkey"
+            columns: ["home_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participants: {
         Row: {
           auth_user_id: string
@@ -105,6 +204,7 @@ export type Database = {
           oid: string
           role: string
           status: string
+          timezone: string
           welcome_dismissed_at: string | null
         }
         Insert: {
@@ -117,6 +217,7 @@ export type Database = {
           oid: string
           role?: string
           status?: string
+          timezone?: string
           welcome_dismissed_at?: string | null
         }
         Update: {
@@ -129,7 +230,32 @@ export type Database = {
           oid?: string
           role?: string
           status?: string
+          timezone?: string
           welcome_dismissed_at?: string | null
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          provider_team_id: number
+          tla: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          provider_team_id: number
+          tla: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          provider_team_id?: number
+          tla?: string
         }
         Relationships: []
       }
@@ -191,7 +317,9 @@ export type Database = {
       }
     }
     Functions: {
+      acquire_match_sync_lock: { Args: never; Returns: boolean }
       dismiss_welcome: { Args: never; Returns: Json }
+      is_admin_user: { Args: never; Returns: boolean }
       is_eligible_nortal_user: { Args: never; Returns: boolean }
       provision_participant_from_jwt: { Args: never; Returns: Json }
       record_auth_failure: {
@@ -204,7 +332,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_timezone: { Args: { p_timezone: string }; Returns: Json }
+      trigger_match_sync: { Args: never; Returns: Json }
       update_display_name: { Args: { new_name: string }; Returns: Json }
+      update_timezone: { Args: { p_timezone: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
