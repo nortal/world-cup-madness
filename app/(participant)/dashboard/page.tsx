@@ -1,9 +1,18 @@
 import { redirect } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import AdminNavLink from '@/components/auth/AdminNavLink';
 import DashboardClient from '@/components/auth/DashboardClient';
+import UpcomingMatchesWidget from '@/components/matches/UpcomingMatchesWidget';
+import { defaultLocale, isLocale, type Locale } from '@/lib/i18n/locales';
 import { createClient } from '@/lib/supabase/server';
+
+// Per NFR-M6 (feature 002): tolerate a sub-minute Supabase blip on the
+// read path by caching the rendered dashboard for up to 60 seconds.
+// Lock-state badges on the upcoming-matches widget are recomputed on every
+// server render even when the underlying matches data is served from cache,
+// so the badge state never goes stale beyond the revalidate window.
+export const revalidate = 60;
 
 /**
  * Participant dashboard (US1 / T040).
@@ -38,6 +47,12 @@ import { createClient } from '@/lib/supabase/server';
  *     `welcome_dismissed_at === null`. The dashboard subtree itself stays
  *     server-rendered (passed through `children`); only the modal-mounting
  *     decision crosses the client boundary.
+ *   - T036 (US-MA): LANDED — replaced the feature-001 empty-state placeholder
+ *     with `<UpcomingMatchesWidget />` (FR-M12). The widget reuses the
+ *     `upcoming-matches-heading` id so screen-reader bookmarks survive.
+ *   - T044 (US-MB): pending — mount `<TimezoneAutoDetect />` Client Component
+ *     so the first dashboard load on a freshly-provisioned participant runs
+ *     `set_timezone()` once with the browser-detected IANA timezone (FR-M14).
  *
  * Translation namespace: `dashboard` (see `lib/i18n/messages/{en,es,pt-BR}.json`).
  */
@@ -53,13 +68,14 @@ export default async function DashboardPage() {
     redirect('/');
   }
 
-  // Project only the columns this page (and its US4 / US5 follow-ups) need.
-  // `welcome_dismissed_at` is selected for T058 even though it is not rendered
-  // yet; `role` is selected for T054. Email / oid are intentionally NOT
+  // Project only the columns this page (and its US4 / US5 / US-MA follow-ups)
+  // need. `welcome_dismissed_at` is selected for T058 (welcome modal gate);
+  // `role` for T054 (admin nav link); `timezone` for T036 (UpcomingMatchesWidget
+  // day-bucketing + kickoff render). Email / oid are intentionally NOT
   // selected — they are PII and have no UI use here (FR-018).
   const { data: participant, error: participantError } = await supabase
     .from('participants')
-    .select('display_name, role, status, welcome_dismissed_at')
+    .select('display_name, role, status, welcome_dismissed_at, timezone')
     .eq('auth_user_id', user.id)
     .maybeSingle();
 
@@ -82,6 +98,12 @@ export default async function DashboardPage() {
   }
 
   const t = await getTranslations('dashboard');
+
+  // Resolve UI locale via next-intl. `getLocale()` returns `string`; narrow
+  // to the supported set so the typed widget accepts it without an unsafe
+  // cast. Matches the pattern used in `app/(participant)/matches/page.tsx`.
+  const rawLocale = await getLocale();
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
 
   // `display_name` is `NOT NULL` in the schema and the provisioning function
   // already falls back to the email local-part when the JWT `name` claim is
@@ -108,14 +130,13 @@ export default async function DashboardPage() {
           {participant.role === 'admin' && <AdminNavLink />}
         </header>
 
-        <section className="mt-10" aria-labelledby="upcoming-matches-heading">
-          <h2 id="upcoming-matches-heading" className="sr-only">
-            {t('emptyState')}
-          </h2>
-          <p className="rounded-md border border-dashed border-gray-300 px-6 py-10 text-center text-base text-gray-600">
-            {t('emptyState')}
-          </p>
-        </section>
+        {/* T036 (US-MA / FR-M12) — replaced the feature-001 empty-state
+            placeholder with the live upcoming-matches widget. The widget
+            preserves the `upcoming-matches-heading` id so screen-reader
+            bookmarks survive. Its own empty-state messaging (zero upcoming
+            matches scheduled) lives inside the widget — see
+            `matches.dashboardWidget.emptyState`. */}
+        <UpcomingMatchesWidget participantTz={participant.timezone} locale={locale} />
       </main>
     </DashboardClient>
   );
