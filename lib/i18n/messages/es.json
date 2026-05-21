@@ -58,6 +58,7 @@
       "allStages": "Todas las fases",
       "allGroups": "Todos los grupos",
       "allTeams": "Todos los equipos",
+      "apply": "Aplicar filtros",
       "clearFilters": "Quitar filtros"
     },
     "detail": {
