@@ -48,6 +48,13 @@ A secondary story for tournament administrators:
 - Q: Timezone UI on `/profile`? → A: Add a full IANA timezone selector to `/profile` with an `update_timezone` RPC mirroring the `update_display_name` pattern from feature 001.
 - Q: Day grouping ("Today", "Tomorrow") — whose timezone? → A: The participant's stored timezone. A user in Brasília and a user in Tallinn looking at the same match may see it under different day headers.
 
+### Session 2026-05-20 (Clarify)
+- Q: Match status state machine — what statuses do we persist and how does the lock state get represented? → A: Persist provider-reported statuses only (`scheduled`, `scheduled-tbd`, `live`, `finished`, `cancelled`). `LOCKED` is a derived UI state computed at read time from `kickoff_utc` and `now()`; never stored. Status enum has 5 values. The catalog stays a 1:1 mirror of provider state; the lock badge is a pure function of stored kickoff vs trusted server time.
+- Q: RLS posture for `matches` / `teams` read path? → A: SELECT policies gated on `is_eligible_nortal_user()` — same predicate as `participants_public` in feature 001. Authenticated Nortal-tenant users can read; ineligible users get empty results. `integration_runs` is admin-only read (gated on `is_admin_user()` per feature 001 pattern). Keeps every read path behind the eligibility predicate for consistency.
+- Q: football-data.org API version pinning? → A: Pin to v4. Edge Function uses `https://api.football-data.org/v4/competitions/WC/matches`. v4 is the current stable version; competition `WC` covers FIFA World Cup with teams + kickoffs + statuses + scores in a single fetch. v2 is in maintenance mode and may retire during the tournament.
+- Q: Concurrent sync handling (admin re-sync + scheduled cron + second admin click)? → A: Postgres `pg_try_advisory_lock(hashtext('match-catalog-sync'))` at the start of the Edge Function. If the lock is already held, the second caller short-circuits with `outcome='skipped'` and writes an `integration_runs` row recording the skip (with the in-flight run's `started_at` for triage). Simple, uses Postgres primitives we already have, fail-safe (advisory locks auto-release on connection close), and protects the 10 req/min rate budget.
+- Q: Read-path resilience to brief Supabase outage? → A: Server Components that query the catalog use Next.js `revalidate: 60` (ISR-style). Catalog page output is cached for up to 60 seconds; subsequent requests serve from cache without touching Supabase. A sub-minute Supabase blip is invisible to participants; longer outages serve stale (last-known) data rather than an error. The dashboard widget uses the same revalidate. Native Next.js feature, no new infra; staleness budget is well below the hourly sync cadence.
+
 ---
 
 ## 3. Workflow
@@ -77,6 +84,7 @@ A secondary story for tournament administrators:
 - **TC-M11:** Admin re-sync — Given an authenticated admin participant, when they invoke the re-sync action, then the system fetches fresh data from the provider, upserts any matches whose fields changed, and writes a row to `integration_runs` with provider name, start/end timestamps, status, and records processed. {Source: AI/Specify}
 - **TC-M12:** Trilingual UI — Given the catalog is loaded, when the participant signs in with `Accept-Language: es-ES` (or `pt-BR`), then `/matches`, `/matches/[id]`, and the dashboard widget render all UI strings (page headings, day labels, stage names, status badges) in the requested locale; kickoff dates use the locale's date-format conventions in addition to the participant's stored timezone. {Source: AI/Specify}
 - **TC-M13:** Idempotent re-import — Given the catalog has been imported once, when the re-sync action runs again with unchanged upstream data, then no row count changes, no duplicate rows are inserted (matched on `provider_id`), and the `integration_runs` row records "0 changes". {Source: AI/Specify}
+- **TC-M14:** Concurrent sync skipped — Given a catalog sync is already in flight (advisory lock held), when a second sync caller invokes the Edge Function, then the second call returns immediately with `outcome='skipped'`, writes an `integration_runs` row with `status='skipped'` and `records_processed=0`, and does NOT contact the football-data.org provider. {Source: AI/Clarify Session 2026-05-20}
 
 **Edge Cases:**
 
@@ -87,6 +95,8 @@ A secondary story for tournament administrators:
 - *What happens at participant TZ DST transitions?* → Day-grouping and kickoff display use the participant's TZ + `Intl.DateTimeFormat`, which handles DST correctly. A match whose kickoff_utc straddles a DST boundary still renders with the correct local clock time on each side.
 - *What happens when a participant signs in from a device with a different TZ than stored?* → Display still uses the **stored** TZ (per Q11-A — consistent cross-device). The user can override via `/profile` if they want the device's TZ.
 - *What happens at the lock boundary while the user is on the detail page?* → The client-side ticker on `/matches/[id]` counts down each second; when it reaches zero it flips the badge to `LOCKED` and stops the timer. No page refresh is required. The displayed lock state remains *advisory* — authoritative lock enforcement is server-side in feature 003.
+- *What happens when Supabase Postgres is briefly down?* → Server Components serve cached output for up to 60 seconds (per NFR-M6); participants see the last-known catalog state with no error. An outage longer than 60 seconds produces a stale (but readable) view until Supabase recovers. After recovery, the next revalidation refreshes the cache.
+- *What happens to the cache when an admin re-syncs the catalog manually?* → The cache is NOT invalidated proactively; the next request after the 60-second revalidate window picks up the new data. Manual re-syncs are visible to participants within at most 60 seconds, which is acceptable given the hourly cron cadence (admins use re-sync for correctness, not real-time UX).
 
 ---
 
@@ -104,12 +114,12 @@ A secondary story for tournament administrators:
 
 - **FR-M01:** System MUST maintain a catalog of matches with the following per-match attributes: provider match id, home team, away team, stage (`group`, `round-of-16`, `quarter-final`, `semi-final`, `third-place`, `final`), group label (e.g. `A`, `B` — null for knockout), kickoff time stored UTC, venue (optional), match status, and home/away score fields. {Source: high-level-architecture.md, ID: FR-004}
 - **FR-M02:** System MUST maintain a catalog of teams with the team's display name, FIFA 3-letter code, and provider team id. {Source: AI/Specify}
-- **FR-M03:** System MUST provide a publicly-defined integration with the football-data.org REST API (via a provider-agnostic abstraction at the Edge Function layer) for importing fixtures and synchronising scores + statuses. {Source: high-level-architecture.md, ID: FR-017}
+- **FR-M03:** System MUST provide a publicly-defined integration with the football-data.org REST API **v4** (`https://api.football-data.org/v4/competitions/WC/matches` for the FIFA World Cup competition) via a provider-agnostic abstraction at the Edge Function layer, for importing fixtures and synchronising scores + statuses. {Source: high-level-architecture.md, ID: FR-017; version pinned Session 2026-05-20}
 - **FR-M04:** System MUST allow an authenticated participant to browse the full match catalog at `/matches`. The default view groups matches by day in the participant's stored timezone, with the closest upcoming day at the top of the page and past days reverse-chronological below. {Source: AI/Specify}
 - **FR-M05:** System MUST support filtering the `/matches` view by stage, group, and team via URL query parameters (`?stage=round-of-16&group=A&team=BRA`) so filtered views are shareable links. Multiple filters compose with AND semantics. {Source: AI/Specify}
 - **FR-M06:** System MUST provide a per-match detail page at `/matches/[id]` (accessible to authenticated participants) showing both teams, stage, group, kickoff time, current status, venue if present, final score if `status='finished'`, and the lock-state badge. {Source: AI/Specify}
 - **FR-M07:** System MUST display kickoff times to participants in their stored timezone using locale-appropriate date and time formatting (en / es / pt-BR per FR-A8). {Source: AI/Specify, derived from BR-LOCK-006}
-- **FR-M08:** System MUST compute and display a lock-state badge for each match using server-side trusted time. The badge has three states: `UPCOMING` (more than 60 minutes until kickoff), `LOCKED` (60 minutes or less until kickoff, or match in progress), `FINISHED` (match completed). {Source: AI/Specify, derived from BR-LOCK-001 / 002 / 003}
+- **FR-M08:** System MUST compute and display a lock-state badge for each match using server-side trusted time. The badge has three states: `UPCOMING` (kickoff > 60 minutes away AND status NOT IN (`live`, `finished`, `cancelled`)), `LOCKED` (kickoff ≤ 60 minutes away OR status = `live`), `FINISHED` (status = `finished` or `cancelled`). The badge is a derived UI value — there is NO `locked` status persisted in the database (status enum holds only the 5 provider-reported values per §8); the badge is recomputed on every server render. {Source: AI/Specify, derived from BR-LOCK-001 / 002 / 003; clarified Session 2026-05-20}
 - **FR-M09:** System MUST show a server-rendered countdown ("Locks in 2 hours 14 minutes") next to the UPCOMING badge on match cards on `/matches` and the dashboard widget. {Source: AI/Specify}
 - **FR-M10:** System MUST show a client-side ticking countdown on the match detail page (`/matches/[id]`) that updates per second and flips the badge to `LOCKED` at the boundary without requiring a page refresh. The initial countdown value MUST be server-computed; the client-side ticker is presentational only and never determines the authoritative lock state. {Source: AI/Specify, constrained by BR-LOCK-001}
 - **FR-M11:** System MUST display the home + away final score on match cards and detail pages when `status='finished'`. The score uses locale-appropriate digit grouping (none required for 0–99 scores but the formatting pipeline MUST honor locale). {Source: AI/Specify}
@@ -123,6 +133,8 @@ A secondary story for tournament administrators:
 - **FR-M19:** System MUST record each catalog sync attempt to an `integration_runs` table with provider name, start + finish timestamps, outcome (`success` / `error`), records processed count, and error message on failure. {Source: AI/Specify}
 - **FR-M20:** System MUST treat provider syncs as idempotent: re-running an import against unchanged upstream data MUST NOT insert duplicate rows. Matches are matched by `provider_id`; updates are applied only when a field differs. {Source: AI/Specify}
 - **FR-M21:** System MUST translate all match-page UI strings (page headings, day labels, stage names, group labels, status badges, lock badges, countdown text, empty-state messages, profile timezone-selector label and validation messages) into `en`, `es`, and `pt-BR`. {Source: high-level-architecture.md, ID: FR-A8, extended}
+- **FR-M22:** System MUST enforce read-path authorization via Row-Level Security: `matches` and `teams` SELECT policies gated on `is_eligible_nortal_user()` (same predicate as feature 001's `participants_public`). `integration_runs` SELECT gated on `is_admin_user()` — non-admin sessions see no sync telemetry. No INSERT/UPDATE/DELETE policies for the `authenticated` role on any of the three tables; writes happen via service-role from the sync Edge Function and (later) admin RPCs. {Source: AI/Clarify, derived from feature 001 RLS conventions}
+- **FR-M23:** System MUST serialise catalog-sync invocations across all callers (admin manual re-sync, scheduled cron, bootstrap) using a Postgres advisory lock keyed `hashtext('match-catalog-sync')`. The Edge Function MUST attempt `pg_try_advisory_lock` at start; if the lock is unavailable, it MUST return immediately with `outcome='skipped'` (HTTP 200 with explanatory body) AND write an `integration_runs` row with `status='skipped'`, `records_processed=0`, and the `started_at` of the in-flight run in the `error_message` field for triage. Successful runs MUST release the lock via `pg_advisory_unlock` (or rely on connection close as the fail-safe). {Source: AI/Clarify Session 2026-05-20}
 
 **Feature-Specific Non-Functional Requirements (NFRs):**
 
@@ -131,6 +143,7 @@ A secondary story for tournament administrators:
 - **NFR-M3:** All match-page surfaces (`/matches`, `/matches/[id]`, dashboard widget, `/profile` timezone selector) MUST meet WCAG 2.1 AA accessibility (axe-core scan with zero violations), matching the bar set by NFR-A4 from feature 001.
 - **NFR-M4:** Match data MUST be stored in UTC in the database; locale-aware rendering happens at presentation time using the participant's stored TZ. {Source: BR-LOCK-006}
 - **NFR-M5:** Provider sync MUST stay within football-data.org's free-tier rate limit of 10 requests per minute. The Edge Function MUST back off and retry on transient 4xx/5xx responses with exponential backoff; the bootstrap import MUST batch + chunk requests if the provider's pagination requires more than 6 calls.
+- **NFR-M6:** Read-path Server Components that render the catalog (`/matches`, `/matches/[id]`, dashboard widget) MUST use Next.js `revalidate: 60` so a sub-minute Supabase outage does not propagate as an error to participants. Stale (last-known) data is preferred to a hard failure during a blip. Lock-state badges computed from `kickoff_utc + now()` still re-evaluate at server-render time even when match rows are served from cache — the cache holds the row data, not the badge label. {Source: AI/Clarify Session 2026-05-20}
 
 **Out of Scope:**
 
@@ -157,8 +170,8 @@ A secondary story for tournament administrators:
 
 ## 6. Definition of Done
 
-- All functional requirements (FR-M01 through FR-M21) implemented and verified
-- All test cases (TC-M1 through TC-M13) pass in automated tests
+- All functional requirements (FR-M01 through FR-M23) implemented and verified
+- All test cases (TC-M1 through TC-M14) pass in automated tests
 - Edge cases enumerated in Section 3 are handled and tested
 - `participants.timezone` column added via a new migration; participants from feature 001 retain their data (existing rows get `'UTC'` default; subsequent first-sign-in flow auto-detects)
 - `integration_runs` table records every catalog sync attempt with full telemetry
@@ -186,7 +199,8 @@ A secondary story for tournament administrators:
 
 **matches:** Catalog of all 104 tournament matches.
 - **Purpose:** Authoritative source of fixture data for participants to browse and (in feature 003) predict against.
-- **Key attributes:** provider match id, home team, away team, stage enum, group label (nullable for knockouts), kickoff UTC timestamp (nullable for pre-draw TBD), venue (optional), status enum (`scheduled`, `scheduled-tbd`, `locked`, `live`, `finished`, `cancelled`), home score (nullable), away score (nullable), created_at, last_synced_at.
+- **Key attributes:** provider match id, home team, away team, stage enum, group label (nullable for knockouts), kickoff UTC timestamp (nullable for pre-draw TBD), venue (optional), status enum (5 provider-reported values: `scheduled`, `scheduled-tbd`, `live`, `finished`, `cancelled`), home score (nullable), away score (nullable), created_at, last_synced_at.
+- **Status notes:** `LOCKED` is NOT a stored status. It is a derived UI badge state (see FR-M08) computed at read time from `kickoff_utc + now()` and the persisted status. This keeps the catalog a 1:1 mirror of provider data and avoids the need for a Postgres scheduled job to flip status at the 60-minute boundary.
 - **Relationships:** Each row references two `teams` rows; future predictions table (feature 003) will reference `matches.id`.
 
 **participants:** *(extended from feature 001)*
@@ -195,8 +209,9 @@ A secondary story for tournament administrators:
 
 **integration_runs:** Telemetry for every catalog sync attempt.
 - **Purpose:** Audit trail and operational visibility for provider integrations (FR-017 §10.2).
-- **Key attributes:** provider name (e.g. `football-data.org`), action (`bootstrap` / `incremental-sync` / `manual-resync`), started_at, finished_at, status (`success` / `error`), records_processed (count of upserts), records_unchanged, error_message (nullable).
+- **Key attributes:** provider name (e.g. `football-data.org`), action (`bootstrap` / `incremental-sync` / `manual-resync`), started_at, finished_at, status (3 values: `success` / `error` / `skipped`), records_processed (count of upserts; 0 for `skipped`), records_unchanged, error_message (nullable; for `skipped` runs holds the in-flight run's `started_at` for triage per FR-M23).
 - **Relationships:** Standalone telemetry table; not referenced by user-facing entities.
+- **RLS posture (per FR-M22):** SELECT gated on `is_admin_user()`; non-admin sessions see no rows. INSERT happens via service-role from the sync Edge Function (no `authenticated` write policy).
 
 ---
 
@@ -237,9 +252,9 @@ A secondary story for tournament administrators:
 
 **External Systems:**
 
-- **football-data.org REST API:** Source of fixture data, match statuses, and post-match scores.
-  - **Business purpose:** Provides authoritative tournament data without us hand-maintaining 104 fixtures. Provider-agnostic abstraction means we can swap to a different provider (sport-specific service, paid tier) if quality is insufficient.
-  - **Data exchange:** Outbound — provider API key in request header; nothing else outbound. Inbound — fixture list (teams, kickoffs, venues, statuses, scores) in JSON, normalised into our `teams` + `matches` tables.
+- **football-data.org REST API v4:** Source of fixture data, match statuses, and post-match scores. Endpoint pinned: `https://api.football-data.org/v4/competitions/WC/matches`.
+  - **Business purpose:** Provides authoritative tournament data without us hand-maintaining 104 fixtures. Provider-agnostic abstraction means we can swap to a different provider (sport-specific service, paid tier) if quality is insufficient — the normaliser layer between the v4 response and our `teams` / `matches` tables is the seam.
+  - **Data exchange:** Outbound — provider API key in `X-Auth-Token` header; nothing else outbound. Inbound — fixture list (teams, kickoffs, venues, statuses, scores) in JSON v4 schema, normalised into our `teams` + `matches` tables.
   - **Timing:** Bootstrap import: once, at deploy time or via admin trigger. Incremental sync: scheduled hourly during the tournament (cron lands in Phase 5). Admin manual re-sync: on-demand.
 
 **Integration Constraints:**
@@ -303,7 +318,7 @@ A secondary story for tournament administrators:
 
 **External References:**
 
-- football-data.org API docs (https://www.football-data.org/documentation/quickstart) — provider for fixture / score data
+- football-data.org API v4 docs (https://docs.football-data.org/general/v4/index.html) and quickstart (https://www.football-data.org/documentation/quickstart) — provider for fixture / score data; competition code `WC` for FIFA World Cup
 - IANA Time Zone Database — source of valid `timezone` column values
 - FIFA World Cup 2026 official schedule — eventual ground truth for the 104 fixtures
 - WCAG 2.1 AA accessibility guidelines — bar for all new UI surfaces (NFR-M3)
