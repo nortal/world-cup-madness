@@ -24,6 +24,54 @@
     "deadline": "Os palpites finais são bloqueados no primeiro pontapé inicial do torneio.",
     "gotIt": "Entendi"
   },
+  "matches": {
+    "pageHeading": "Jogos",
+    "pageDescription": "Todos os jogos da Copa do Mundo FIFA 2026.",
+    "emptyCatalog": "O calendário de jogos ainda não foi carregado. Um administrador irá publicá-lo em breve.",
+    "viewAllMatches": "Ver todos os jogos",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "yesterday": "Ontem",
+    "vs": "x",
+    "stages": {
+      "group": "Fase de grupos",
+      "round-of-16": "Oitavas de final",
+      "quarter-final": "Quartas de final",
+      "semi-final": "Semifinais",
+      "third-place": "Disputa do terceiro lugar",
+      "final": "Final"
+    },
+    "groupLabel": "Grupo {letter}",
+    "badge": {
+      "upcoming": "EM BREVE",
+      "locked": "BLOQUEADO",
+      "finished": "FINALIZADO"
+    },
+    "countdown": {
+      "locksIn": "Bloqueia em {time}",
+      "hoursMinutes": "{hours} h {minutes} min",
+      "minutesOnly": "{minutes} min",
+      "minutesSeconds": "{minutes} min {seconds} s",
+      "lockingNow": "Bloqueando agora"
+    },
+    "filters": {
+      "allStages": "Todas as fases",
+      "allGroups": "Todos os grupos",
+      "allTeams": "Todos os times",
+      "clearFilters": "Limpar filtros"
+    },
+    "detail": {
+      "backToList": "Voltar para jogos",
+      "kickoff": "Pontapé inicial",
+      "venue": "Estádio",
+      "finalScore": "Placar final",
+      "status": "Situação"
+    },
+    "dashboardWidget": {
+      "heading": "Próximos jogos",
+      "emptyState": "Ainda não há próximos jogos programados."
+    }
+  },
   "profile": {
     "heading": "Seu perfil",
     "emailLabel": "E-mail",
@@ -34,7 +82,17 @@
     "errorEmpty": "O nome de exibição não pode ficar vazio.",
     "errorTooLong": "O nome de exibição deve ter 100 caracteres ou menos.",
     "errorNotFound": "Não foi possível localizar sua conta de participante. Por favor, saia e entre novamente.",
-    "errorGeneric": "Não foi possível atualizar o nome de exibição. Por favor, tente novamente."
+    "errorGeneric": "Não foi possível atualizar o nome de exibição. Por favor, tente novamente.",
+    "timezoneLabel": "Fuso horário",
+    "timezoneHelper": "Os horários dos jogos são exibidos neste fuso horário.",
+    "timezonePlaceholder": "Buscar fusos horários…",
+    "timezoneSaveButton": "Salvar fuso horário",
+    "timezoneSavingButton": "Salvando…",
+    "timezoneSuccessToast": "Fuso horário atualizado.",
+    "timezoneErrorEmpty": "O fuso horário é obrigatório.",
+    "timezoneErrorTooLong": "O fuso horário deve ter no máximo 64 caracteres.",
+    "timezoneErrorNotFound": "Sua conta de participante não foi encontrada. Saia e entre novamente.",
+    "timezoneErrorGeneric": "Não foi possível atualizar o fuso horário. Tente novamente."
   },
   "accessDenied": {
     "heading": "Este torneio é para colaboradores da Nortal",

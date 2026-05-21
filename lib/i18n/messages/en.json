@@ -24,6 +24,54 @@
     "deadline": "Final predictions lock at the first tournament kickoff.",
     "gotIt": "Got it"
   },
+  "matches": {
+    "pageHeading": "Matches",
+    "pageDescription": "Every fixture for the FIFA World Cup 2026.",
+    "emptyCatalog": "The match schedule has not been loaded yet. An administrator will publish it shortly.",
+    "viewAllMatches": "View all matches",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "vs": "vs",
+    "stages": {
+      "group": "Group stage",
+      "round-of-16": "Round of 16",
+      "quarter-final": "Quarter-finals",
+      "semi-final": "Semi-finals",
+      "third-place": "Third-place playoff",
+      "final": "Final"
+    },
+    "groupLabel": "Group {letter}",
+    "badge": {
+      "upcoming": "UPCOMING",
+      "locked": "LOCKED",
+      "finished": "FINISHED"
+    },
+    "countdown": {
+      "locksIn": "Locks in {time}",
+      "hoursMinutes": "{hours}h {minutes}m",
+      "minutesOnly": "{minutes}m",
+      "minutesSeconds": "{minutes}m {seconds}s",
+      "lockingNow": "Locking now"
+    },
+    "filters": {
+      "allStages": "All stages",
+      "allGroups": "All groups",
+      "allTeams": "All teams",
+      "clearFilters": "Clear filters"
+    },
+    "detail": {
+      "backToList": "Back to matches",
+      "kickoff": "Kickoff",
+      "venue": "Venue",
+      "finalScore": "Final score",
+      "status": "Status"
+    },
+    "dashboardWidget": {
+      "heading": "Upcoming matches",
+      "emptyState": "No upcoming matches scheduled yet."
+    }
+  },
   "profile": {
     "heading": "Your profile",
     "emailLabel": "Email",
@@ -34,7 +82,17 @@
     "errorEmpty": "Display name cannot be empty.",
     "errorTooLong": "Display name must be 100 characters or fewer.",
     "errorNotFound": "Your participant account could not be located. Please sign out and back in.",
-    "errorGeneric": "Could not update display name. Please try again."
+    "errorGeneric": "Could not update display name. Please try again.",
+    "timezoneLabel": "Timezone",
+    "timezoneHelper": "Match kickoff times display in this timezone.",
+    "timezonePlaceholder": "Search timezones…",
+    "timezoneSaveButton": "Save timezone",
+    "timezoneSavingButton": "Saving…",
+    "timezoneSuccessToast": "Timezone updated.",
+    "timezoneErrorEmpty": "Timezone is required.",
+    "timezoneErrorTooLong": "Timezone must be 64 characters or fewer.",
+    "timezoneErrorNotFound": "Your participant account could not be located. Please sign out and back in.",
+    "timezoneErrorGeneric": "Could not update timezone. Please try again."
   },
   "accessDenied": {
     "heading": "This pool is for Nortal collaborators",
