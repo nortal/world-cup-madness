@@ -1,0 +1,44 @@
+{
+  "name": "world-cup-madness",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --project=accessibility"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.10.3",
+    "@supabase/supabase-js": "2.105.4",
+    "@tailwindcss/postcss": "4.3.0",
+    "autoprefixer": "10.5.0",
+    "next": "15.5.18",
+    "next-intl": "4.12.0",
+    "postcss": "8.5.14",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "server-only": "0.0.1",
+    "tailwindcss": "4.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.3",
+    "@playwright/test": "1.60.0",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/jest": "30.0.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "jest": "30.4.2",
+    "prettier": "3.8.3",
+    "prettier-plugin-tailwindcss": "0.8.0",
+    "supabase": "2.98.2",
+    "typescript": "6.0.3"
+  }
+}

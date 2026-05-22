@@ -1,0 +1,129 @@
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Predict every match of FIFA World Cup 2026 and compete with your colleagues."
+  },
+  "signIn": {
+    "label": "Sign in with Microsoft",
+    "loading": "Signing in…",
+    "error": "Sign-in could not start. Please try again."
+  },
+  "dashboard": {
+    "greeting": "Welcome, {name}",
+    "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized.",
+    "adminNavLabel": "Admin console"
+  },
+  "welcome": {
+    "title": "Welcome to World Cup Madness",
+    "intro": "Here's how the pool works.",
+    "scoringExact": "Exact score: 10 points per match",
+    "scoringOutcome": "Correct outcome only (win, loss, or draw): 5 points",
+    "scoringWrong": "Wrong outcome: 0 points",
+    "scoringFinal": "Final predictions (champion, runner-up, top scorer, best player): 20 points each",
+    "lockWindow": "Match predictions lock 60 minutes before kickoff.",
+    "deadline": "Final predictions lock at the first tournament kickoff.",
+    "gotIt": "Got it"
+  },
+  "matches": {
+    "pageHeading": "Matches",
+    "pageDescription": "Every fixture for the FIFA World Cup 2026.",
+    "emptyCatalog": "The match schedule has not been loaded yet. An administrator will publish it shortly.",
+    "viewAllMatches": "View all matches",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "vs": "vs",
+    "stages": {
+      "group": "Group stage",
+      "round-of-16": "Round of 16",
+      "quarter-final": "Quarter-finals",
+      "semi-final": "Semi-finals",
+      "third-place": "Third-place playoff",
+      "final": "Final"
+    },
+    "groupLabel": "Group {letter}",
+    "badge": {
+      "upcoming": "UPCOMING",
+      "locked": "LOCKED",
+      "finished": "FINISHED"
+    },
+    "countdown": {
+      "locksIn": "Locks in {time}",
+      "hoursMinutes": "{hours}h {minutes}m",
+      "minutesOnly": "{minutes}m",
+      "minutesSeconds": "{minutes}m {seconds}s",
+      "lockingNow": "Locking now"
+    },
+    "filters": {
+      "allStages": "All stages",
+      "allGroups": "All groups",
+      "allTeams": "All teams",
+      "apply": "Apply filters",
+      "clearFilters": "Clear filters"
+    },
+    "detail": {
+      "backToList": "Back to matches",
+      "kickoff": "Kickoff",
+      "venue": "Venue",
+      "finalScore": "Final score",
+      "status": "Status"
+    },
+    "dashboardWidget": {
+      "heading": "Upcoming matches",
+      "emptyState": "No upcoming matches scheduled yet."
+    }
+  },
+  "profile": {
+    "heading": "Your profile",
+    "emailLabel": "Email",
+    "displayNameLabel": "Display name",
+    "saveButton": "Save",
+    "savingButton": "Saving…",
+    "successToast": "Display name updated.",
+    "errorEmpty": "Display name cannot be empty.",
+    "errorTooLong": "Display name must be 100 characters or fewer.",
+    "errorNotFound": "Your participant account could not be located. Please sign out and back in.",
+    "errorGeneric": "Could not update display name. Please try again.",
+    "timezoneLabel": "Timezone",
+    "timezoneHelper": "Match kickoff times display in this timezone.",
+    "timezonePlaceholder": "Search timezones…",
+    "timezoneSaveButton": "Save timezone",
+    "timezoneSavingButton": "Saving…",
+    "timezoneSuccessToast": "Timezone updated.",
+    "timezoneErrorEmpty": "Timezone is required.",
+    "timezoneErrorTooLong": "Timezone must be 64 characters or fewer.",
+    "timezoneErrorNotFound": "Your participant account could not be located. Please sign out and back in.",
+    "timezoneErrorGeneric": "Could not update timezone. Please try again."
+  },
+  "accessDenied": {
+    "heading": "This pool is for Nortal collaborators",
+    "body": "Sign-in was rejected because your Microsoft account is not in the Nortal Entra tenant.",
+    "retryLabel": "Sign in with a different account",
+    "contact": "If you believe this is a mistake, please contact your tournament administrator."
+  },
+  "authError": {
+    "heading": "Sign-in didn't complete",
+    "body": "Something interrupted sign-in. This is usually temporary — please try again.",
+    "retryLabel": "Retry sign-in",
+    "contact": "If the problem persists, please contact your tournament administrator.",
+    "statusLinkLabel": "Check service status"
+  },
+  "privacy": {
+    "linkLabel": "Privacy notice",
+    "heading": "Privacy notice",
+    "intro": "World Cup Madness is an internal Nortal prediction pool. Here is what we collect, why, and who can see it.",
+    "dataCollectedHeading": "Data we collect",
+    "dataCollectedBody": "Your corporate email address and your Microsoft display name. We receive both from your Microsoft work account when you sign in. We do not collect anything else from your Microsoft profile.",
+    "purposeHeading": "Why we collect it",
+    "purposeBody": "Email is used to verify that you are an eligible Nortal collaborator. Display name is shown on the leaderboard so colleagues can recognize you. Both, along with sign-in and prediction edit events, are recorded in an audit log so the tournament outcome can be reviewed.",
+    "audienceHeading": "Who can see your data",
+    "audienceBody": "Other participants see your display name and your points on the leaderboard. Tournament administrators can see your email address for support and eligibility purposes. No external service receives your data.",
+    "legalBasisHeading": "Legal basis",
+    "legalBasisBody": "We process this data under legitimate interest in the context of your Nortal employment. Participation in the pool is voluntary; there is no separate consent step for MVP.",
+    "retentionHeading": "How long we keep your data",
+    "retentionBody": "Retention period for predictions, scores, and audit data after the tournament concludes will be set by Nortal Privacy and Legal before launch and added here.",
+    "backLabel": "Back to sign-in",
+    "welcomeSummary": "We collect your corporate email and display name to verify eligibility and show your name on the leaderboard.",
+    "learnMore": "Learn more"
+  }
+}

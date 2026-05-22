@@ -56,12 +56,12 @@ The default tie-breaker order, in priority sequence (business should approve bef
 
 | Topic | Clarification |
 |---|---|
-| **Official score basis** | Project must define whether knockout predictions use regular time, extra time, or the official final score excluding penalty shootouts. **Critical pre-launch decision — see [OD-002](open-decisions.md#od-002--official-score-basis-for-knockouts).** |
-| **Penalty shootouts** | Should not be assumed part of the predicted score unless explicitly stated. If included, UI and data model must support it. **See [OD-003](open-decisions.md#od-003--penalty-shootouts).** |
+| **Official score basis** | **Regular time (90 min + injury time) only** — knockout predictions are scored against the 90-min result regardless of extra time or penalty shootouts. Resolved per [OD-002](open-decisions.md#od-002--official-score-basis-for-knockouts). |
+| **Penalty shootouts** | **Excluded** from the predicted score. Predictions are score-only; penalty shootouts never affect scoring. UI shows the post-shootout result for context but the prediction is scored against the 90-min score. Resolved per [OD-003](open-decisions.md#od-003--penalty-shootouts). |
 | **Abandoned or postponed matches** | If a match is postponed, the lock time should follow the corrected kickoff time unless the original match had already locked and business decides otherwise. |
 | **Provider data changes** | If a provider changes a score after recalculation, the application must preserve the prior calculation and record a new recalculation event (FR-018 audit trail). |
-| **Top scorer ties** | If multiple players share top scorer status, business must decide whether all are accepted or whether official award rules determine one winner. **See [OD-004](open-decisions.md#od-004--top-scorer-ties).** |
-| **Best player source** | Source of the official best player award must be determined before final scoring. **See [OD-005](open-decisions.md#od-005--best-player-source).** |
+| **Top scorer ties** | **FIFA's Golden Boot tiebreakers apply** (most goals → most assists → fewest minutes). Only the officially awarded player is the correct top scorer. Resolved per [OD-004](open-decisions.md#od-004--top-scorer-ties). |
+| **Best player source** | **Adidas Golden Ball (FIFA Player of the Tournament)** announced at the closing ceremony. Admin sets the awarded player via FR-015. Resolved per [OD-005](open-decisions.md#od-005--best-player-source). |
 
 ## Linked FRs
 
