@@ -177,3 +177,62 @@ npm run lint
 | Spanish / Portuguese sign-in shows English text | Stale `NEXT_LOCALE` cookie from a previous session | Clear browser cookies for `localhost:3000`; the middleware re-detects from `Accept-Language` on next request |
 | `signInAs: admin.createUser failed for ...: Unable to validate email address` | Whitespace or invalid characters in test email | Supabase Auth's format validator rejects whitespace; use a clean email per the `e2e/fixtures/auth.ts` defaults |
 | `infinite recursion detected in policy for relation 'participants'` | Stale local schema (pre-migration 0010) | `npx supabase db reset` — migration 0010 introduced the `is_admin_user()` SECURITY DEFINER helper that breaks the recursion |
+
+---
+
+## Feature 002 — Match catalog
+
+**Spec:** [`specs/002-match-catalog-read/`](specs/002-match-catalog-read/) (FRs, NFRs, TCs)
+**Setup guide:** [`specs/002-match-catalog-read/quickstart.md`](specs/002-match-catalog-read/quickstart.md) — step-by-step first-run instructions
+**DoD report:** [`specs/002-match-catalog-read/dod-verification.md`](specs/002-match-catalog-read/dod-verification.md)
+**Provider sync deep-dive:** [`supabase/functions/sync-matches/README.md`](supabase/functions/sync-matches/README.md)
+
+### What shipped
+
+Match catalog with provider sync (football-data.org v4), per-participant timezone (browser auto-detect + manual `/profile` picker), `/matches` browse + `/matches/[id]` detail pages, day-bucket grouping in the participant's timezone, lock-state badges, dashboard upcoming-matches widget, admin re-sync action, and idempotent + concurrency-safe sync via a Postgres advisory-lock mutex.
+
+### New environment variables
+
+Append to `.env.local` (template entries already in `.env.example`):
+
+| Variable | Where it goes | Notes |
+|---|---|---|
+| `FOOTBALL_DATA_API_KEY` | Edge Function (server-only) | Required in deployed envs; **not** required when `SYNC_FIXTURE_MODE=1`. Sign up at https://www.football-data.org (free tier, 10 req/min). |
+| `SYNC_FIXTURE_MODE` | Edge Function (server-only) | Set to `1` to read `supabase/functions/sync-matches/__fixtures__/v4-sample.json` instead of hitting the provider. Used by local dev + CI. Any other value (or unset) means live-provider mode. |
+
+### Local test commands
+
+In addition to the feature-001 commands above:
+
+```bash
+# Serve the Edge Function in fixture mode (no API key required;
+# .env.local must contain FOOTBALL_DATA_API_KEY=<anything> and SYNC_FIXTURE_MODE=1)
+SYNC_FIXTURE_MODE=1 npx supabase functions serve sync-matches --env-file .env.local
+
+# pgTAP — matches + sync RPCs + advisory lock + RLS
+npx supabase db test test/pgtap/*.sql
+
+# Playwright — the new feature-002 specs
+npx playwright test e2e/tests/matches-*.spec.ts \
+                    e2e/tests/match-sync-*.spec.ts \
+                    e2e/tests/timezone-*.spec.ts \
+                    e2e/tests/day-grouping-cross-tz.spec.ts
+```
+
+### Troubleshooting
+
+Most-hit rows from the [feature-002 quickstart §9](specs/002-match-catalog-read/quickstart.md#9-troubleshooting); see the quickstart for the full table.
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `function net.http_post does not exist` | `pg_net` extension not enabled in local Supabase | Either skip the `trigger_match_sync` RPC tests (the function still works via direct Edge Function curl) or enable pg_net via `CREATE EXTENSION pg_net;` in a migration (Pro tier only — local stack may not support it) |
+| `matches` table empty after running the sync | Check `integration_runs` for an `error` row | Most likely a missing API key — switch to fixture mode (`SYNC_FIXTURE_MODE=1`) |
+| Kickoffs render in UTC even though your browser is on a different TZ | Auto-detect Client Component hasn't fired yet, or `participants.timezone` is still `'UTC'` | Visit `/dashboard` (auto-detect runs on first mount); alternatively set TZ manually at `/profile` |
+| Filter chip on `/matches` not narrowing the list | Filters compose with AND; not all combinations are valid (e.g. `?group=A` only narrows group-stage matches) | Conflicting filters produce empty results — expected per FR-M05 |
+| Advisory lock never releases | Edge Function crashed mid-flight | Wait ~10 seconds (connection-close fail-safe per research §R-4), then retry. If it persists, restart `supabase functions serve` |
+
+### Cross-references
+
+- [`specs/002-match-catalog-read/spec.md`](specs/002-match-catalog-read/spec.md) — FRs / NFRs / TCs
+- [`specs/002-match-catalog-read/dod-verification.md`](specs/002-match-catalog-read/dod-verification.md) — audit evidence
+- [`supabase/functions/sync-matches/README.md`](supabase/functions/sync-matches/README.md) — provider sync deep-dive (env vars, action types, concurrency model, deployment)
