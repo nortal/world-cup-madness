@@ -193,6 +193,30 @@ $$;
 REVOKE ALL ON FUNCTION acquire_match_sync_lock() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION acquire_match_sync_lock() TO service_role;
 
--- (There is no release_match_sync_lock RPC — the Edge Function calls
---  pg_advisory_unlock(hashtext('match-catalog-sync')) directly via the SQL
---  client. Connection close auto-releases the lock as a fail-safe per R-4.)
+-- ---------------------------------------------------------------------------
+-- release_match_sync_lock() — explicit release pair for acquire (T053 follow-up)
+-- ---------------------------------------------------------------------------
+-- The Edge Function (sync-matches/index.ts) cannot compute hashtext() from the
+-- supabase-js client (PostgREST doesn't expose hashtext directly + the JS
+-- client can't pass a string-key to pg_advisory_unlock without an RPC seam).
+-- We expose a symmetric RPC so the function's `finally` block can release
+-- explicitly. Session-close auto-release remains the fail-safe per
+-- research.md §R-4 — explicit release is preferable so the lock window
+-- matches the function's logical run rather than the JS client's connection
+-- pool reuse.
+--
+-- Returns boolean (true = lock was held by this session and was released;
+-- false = the caller did not hold the lock — typically harmless because
+-- the catch-and-swallow in the Edge Function treats either result the
+-- same: lock is free for the next caller).
+CREATE OR REPLACE FUNCTION release_match_sync_lock()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT pg_advisory_unlock(hashtext('match-catalog-sync'))
+$$;
+
+REVOKE ALL ON FUNCTION release_match_sync_lock() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION release_match_sync_lock() TO service_role;

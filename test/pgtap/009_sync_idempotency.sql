@@ -1,13 +1,15 @@
--- pgTAP test: idempotent UPSERT + advisory-lock semantics for the match-catalog sync
+-- pgTAP test: idempotent UPSERT + in-flight-row mutex for the match-catalog sync
 --
 -- Source migrations: supabase/migrations/0012_create_matches.sql (UNIQUE on
 --                    provider_id underwrites the idempotent UPSERT)
---                    supabase/migrations/0015_match_rpcs.sql
---                    (acquire_match_sync_lock function)
+--                    supabase/migrations/0018_match_sync_inflight_lock.sql
+--                    (partial unique index `integration_runs_at_most_one_in_flight`
+--                    enforces "at most one in-flight row" — the
+--                    advisory-lock RPCs from migration 0015 are dropped there)
 -- Spec references:
 --   specs/002-match-catalog-read/spec.md FR-M20 (idempotent re-import)
---   specs/002-match-catalog-read/spec.md FR-M23 (Postgres advisory lock)
---   specs/002-match-catalog-read/research.md §R-4 (advisory lock pattern)
+--   specs/002-match-catalog-read/spec.md FR-M23 (concurrency control)
+--   specs/002-match-catalog-read/research.md §R-4 (concurrency design)
 --
 -- Invariants under test (10 assertions):
 --
@@ -26,25 +28,24 @@
 --   6. Documents the field-diff "unchanged count" contract that the Edge
 --      Function will use to populate integration_runs.records_unchanged.
 --
--- ADVISORY LOCK (FR-M23):
---   7. acquire_match_sync_lock() returns TRUE on first acquire of a fresh
---      session.
---   8. acquire_match_sync_lock() returns TRUE on a SECOND same-session call
---      — Postgres advisory locks are reentrant for the holding session
---      ("If a session already holds a given advisory lock, additional
---      requests will always succeed", per pg_try_advisory_lock docs). The
---      lock stacks; the cross-session "another invocation in flight →
---      skipped" path is exercised by the Playwright spec T057 because it
---      requires two distinct DB connections (which a single pgTAP
---      BEGIN/ROLLBACK can't provide).
---   9. pg_advisory_unlock() returns TRUE for a held lock.
---  10. After release-down-to-zero, acquire_match_sync_lock() returns TRUE
---      again (lock can be re-acquired by a subsequent caller).
+-- IN-FLIGHT MUTEX (FR-M23):
+--   7. Inserting the first in-flight integration_runs row (finished_at IS NULL)
+--      succeeds when no prior in-flight row exists.
+--   8. Inserting a SECOND in-flight row while the first is still in flight
+--      fails with SQLSTATE 23505 (unique violation on the partial index
+--      `integration_runs_at_most_one_in_flight`). This is the Postgres-
+--      enforced mutex that replaces the broken advisory-lock model from
+--      migration 0015: PostgREST closes its DB session after every RPC, so
+--      advisory locks never spanned the actual sync work — see migration
+--      0018 commit message for the full story.
+--   9. UPDATEing the first in-flight row's finished_at to a non-NULL value
+--      drops it out of the partial-index domain, releasing the slot.
+--  10. After release, a fresh in-flight row insert succeeds — proves the
+--      mutex is correctly scoped to "finished_at IS NULL" only.
 --
--- ROLLBACK at the end keeps the test stateless on row inserts, but advisory
--- locks are SESSION-scoped, not transaction-scoped, so ROLLBACK does NOT
--- release them. We defensively call pg_advisory_unlock_all() before the
--- first acquire test and after the last release test.
+-- ROLLBACK at the end keeps the test stateless. integration_runs rows
+-- created here are transaction-scoped, so unlike the advisory-lock version
+-- there is no session-scoped cleanup required.
 
 BEGIN;
 
@@ -223,63 +224,85 @@ SELECT ok(
 );
 
 -- ---------------------------------------------------------------------------
--- Advisory lock tests — start from a clean lock state for the session.
+-- In-flight-row mutex tests
 -- ---------------------------------------------------------------------------
--- ROLLBACK at the file end does NOT release session-scoped advisory locks,
--- so we defensively release all advisory locks before the first acquire test
--- (in case a previous test in this run held one) and after the final release
--- (so subsequent test files in the run start clean).
-SELECT pg_advisory_unlock_all();
+-- The partial unique index from migration 0018 enforces "at most one
+-- in-flight row" (finished_at IS NULL). Tests 7-10 walk the lifecycle:
+-- claim → second-claim-fails → release → re-claim succeeds.
+--
+-- Defensive cleanup: clear any in-flight rows another test in this run may
+-- have left behind. BEGIN/ROLLBACK won't see across files, so a row
+-- inserted-but-not-rolled-back by a prior file would block test 7. The
+-- DELETE here is the file-scoped equivalent of pg_advisory_unlock_all().
+DELETE FROM integration_runs WHERE finished_at IS NULL;
 
 -- ---------------------------------------------------------------------------
--- Test 7 — acquire_match_sync_lock() returns TRUE on first call.
+-- Test 7 — First in-flight INSERT succeeds.
 -- ---------------------------------------------------------------------------
+-- The Edge Function "claims" the in-flight slot by inserting a row with
+-- finished_at=NULL. The partial unique index admits exactly one such row
+-- at a time; the first claim therefore must succeed unconditionally.
+INSERT INTO integration_runs (provider, action, started_at, finished_at, status,
+                              records_processed, records_unchanged)
+VALUES ('football-data.org', 'bootstrap', now(), NULL, 'success', 0, 0);
+
 SELECT is(
-    (SELECT acquire_match_sync_lock()),
-    TRUE,
-    'acquire_match_sync_lock() returns TRUE on first acquire (fresh session)'
+    (SELECT count(*)::int FROM integration_runs WHERE finished_at IS NULL),
+    1,
+    'first in-flight INSERT succeeds (one row with finished_at IS NULL)'
 );
 
 -- ---------------------------------------------------------------------------
--- Test 8 — Reentrant: second same-session call also returns TRUE.
+-- Test 8 — Second concurrent in-flight INSERT fails with unique violation.
 -- ---------------------------------------------------------------------------
--- Per Postgres docs (pg_try_advisory_lock): "If a session already holds a
--- given advisory lock, additional requests will always succeed; even if
--- other sessions are waiting for the lock." The lock stacks per session and
--- must be released as many times as acquired. The cross-session "another
--- invocation in flight → skipped" path requires two distinct DB connections
--- and is therefore exercised by the Playwright spec T057, not here.
-SELECT is(
-    (SELECT acquire_match_sync_lock()),
-    TRUE,
-    'acquire_match_sync_lock() returns TRUE on reentrant same-session call (lock stacks; cross-session test is T057)'
+-- Test 7's row is still in-flight (finished_at IS NULL). Any further insert
+-- with finished_at=NULL must therefore collide on the partial unique index.
+-- This is the same Postgres guarantee that TC-M14 exercises end-to-end via
+-- two concurrent Edge Function POSTs; here we assert the DB-layer contract
+-- directly so the regression surface is wider than just "the Playwright
+-- spec passed".
+--
+-- pgTAP's throws_ok catches the unique_violation inside its own savepoint
+-- so the outer transaction stays usable for tests 9 and 10.
+SELECT throws_ok(
+    $$ INSERT INTO integration_runs (provider, action, started_at, finished_at, status,
+                                     records_processed, records_unchanged)
+       VALUES ('football-data.org', 'manual-resync', now(), NULL, 'success', 0, 0) $$,
+    '23505',
+    NULL,
+    'second concurrent in-flight INSERT fails with unique_violation (SQLSTATE 23505)'
 );
 
 -- ---------------------------------------------------------------------------
--- Test 9 — pg_advisory_unlock returns TRUE for a held lock.
+-- Test 9 — Setting finished_at releases the slot.
 -- ---------------------------------------------------------------------------
--- We need to release twice to bring the stack back to zero before test 10.
+-- The mutex "release" path: the Edge Function UPDATEs the in-flight row to
+-- set finished_at to now() once the sync wraps. The row drops out of the
+-- partial-index domain on commit, freeing the slot for the next sync.
+UPDATE integration_runs
+   SET finished_at = now()
+ WHERE finished_at IS NULL;
+
 SELECT is(
-    (SELECT pg_advisory_unlock(hashtext('match-catalog-sync'))),
-    TRUE,
-    'pg_advisory_unlock returns TRUE for the held lock (release stack depth 2 → 1)'
+    (SELECT count(*)::int FROM integration_runs WHERE finished_at IS NULL),
+    0,
+    'UPDATEing finished_at releases the in-flight slot (zero rows with finished_at IS NULL)'
 );
 
 -- ---------------------------------------------------------------------------
--- Test 10 — After full release, the lock can be re-acquired.
+-- Test 10 — After release, a fresh in-flight INSERT succeeds.
 -- ---------------------------------------------------------------------------
--- Release the second stacked hold (depth 1 → 0), then re-acquire to prove
--- the release/reacquire cycle works end-to-end.
-SELECT pg_advisory_unlock(hashtext('match-catalog-sync'));
+-- Proves the mutex is correctly scoped to the "finished_at IS NULL" predicate
+-- only — finished rows (regardless of how many) never block a new claim.
+INSERT INTO integration_runs (provider, action, started_at, finished_at, status,
+                              records_processed, records_unchanged)
+VALUES ('football-data.org', 'incremental-sync', now(), NULL, 'success', 0, 0);
 
 SELECT is(
-    (SELECT acquire_match_sync_lock()),
-    TRUE,
-    'acquire_match_sync_lock() returns TRUE after the lock is fully released (depth 0 → 1)'
+    (SELECT count(*)::int FROM integration_runs WHERE finished_at IS NULL),
+    1,
+    'after release, a fresh in-flight INSERT succeeds (slot re-claimable)'
 );
-
--- Defensive cleanup so subsequent test files in the same run start clean.
-SELECT pg_advisory_unlock_all();
 
 SELECT * FROM finish();
 
