@@ -175,7 +175,11 @@ test('TC-4: editing display_name persists, writes an audit row, and updates the 
   //     "Save" (verified in `lib/i18n/messages/en.json`). While the RPC is
   //     in flight the label flips to `profile.savingButton`, but
   //     `.click()` resolves synchronously against the rendered "Save" label.
-  await page.getByRole('button', { name: 'Save' }).click();
+  // `exact: true` because /profile now also has a "Save timezone" button
+  // (from the TimezonePicker added in T046 / US-MB feature 002); without
+  // it, the substring match resolves to both buttons and trips Playwright
+  // strict-mode.
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
 
   // C3. Wait for the success banner. The form renders the banner with
   //     `role="status"` and the text from `profile.successToast` =

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import DisplayNameForm from '@/components/profile/DisplayNameForm';
+import TimezonePicker from '@/components/profile/TimezonePicker';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -46,6 +47,14 @@ import { createClient } from '@/lib/supabase/server';
  *     do NOT apply the dashboard's "Participant" fallback here because the
  *     user needs to see the literal stored value in order to edit it.
  *
+ * Timezone handling (T046 / US-MB / FR-M15):
+ *   - The editable selector is owned by `<TimezonePicker>` (T045, Client
+ *     Component) — a hand-rolled WAI-ARIA combobox over the static IANA list
+ *     (`lib/matches/iana-timezones.ts`). On Save it calls `update_timezone`
+ *     RPC; success / error UX mirrors `DisplayNameForm`. The initialValue
+ *     is the participant's currently-stored `timezone` (NOT NULL with
+ *     default `'UTC'`).
+ *
  * Translation namespace: `profile` (see `lib/i18n/messages/{en,es,pt-BR}.json`).
  * The form's own keys (`displayNameLabel`, `saveButton`, etc.) are consumed
  * by `<DisplayNameForm>` via `useTranslations('profile')` — they are already
@@ -65,12 +74,13 @@ export default async function ProfilePage() {
   }
 
   // Project only the columns this page renders. `display_name` is the editable
-  // field (handed off to the Client Component), `email` is the read-only row.
+  // field (handed off to <DisplayNameForm>), `email` is the read-only row,
+  // `timezone` is the editable selector (handed off to <TimezonePicker>).
   // `oid` / `tid` / `role` / `status` are intentionally NOT selected — they
   // have no UI use here (FR-018 data minimization).
   const { data: participant, error: participantError } = await supabase
     .from('participants')
-    .select('display_name, email')
+    .select('display_name, email, timezone')
     .eq('auth_user_id', user.id)
     .maybeSingle();
 
@@ -112,6 +122,13 @@ export default async function ProfilePage() {
 
       <section className="mt-10">
         <DisplayNameForm initialValue={participant.display_name} />
+      </section>
+
+      {/* T046 (US-MB / FR-M15) — TimezonePicker hand-rolled WAI-ARIA combobox
+          over the static IANA list (lib/matches/iana-timezones.ts). Calls
+          update_timezone RPC; success / error UX mirrors DisplayNameForm. */}
+      <section className="mt-10">
+        <TimezonePicker initialValue={participant.timezone} />
       </section>
     </main>
   );

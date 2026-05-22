@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 
 import AdminNavLink from '@/components/auth/AdminNavLink';
 import DashboardClient from '@/components/auth/DashboardClient';
+import TimezoneAutoDetect from '@/components/matches/TimezoneAutoDetect';
 import UpcomingMatchesWidget from '@/components/matches/UpcomingMatchesWidget';
 import { defaultLocale, isLocale, type Locale } from '@/lib/i18n/locales';
 import { createClient } from '@/lib/supabase/server';
@@ -50,9 +51,14 @@ export const revalidate = 60;
  *   - T036 (US-MA): LANDED — replaced the feature-001 empty-state placeholder
  *     with `<UpcomingMatchesWidget />` (FR-M12). The widget reuses the
  *     `upcoming-matches-heading` id so screen-reader bookmarks survive.
- *   - T044 (US-MB): pending — mount `<TimezoneAutoDetect />` Client Component
- *     so the first dashboard load on a freshly-provisioned participant runs
- *     `set_timezone()` once with the browser-detected IANA timezone (FR-M14).
+ *   - T044 (US-MB): LANDED — `<TimezoneAutoDetect />` Client Component mounts
+ *     conditionally when `participant.timezone === 'UTC'` (the default after
+ *     provisioning). On first dashboard mount it reads
+ *     `Intl.DateTimeFormat().resolvedOptions().timeZone` and calls
+ *     `set_timezone()` once via the browser supabase client (FR-M14). The
+ *     gate avoids an RPC round-trip when the column has already been set;
+ *     the RPC itself is internally idempotent (one-shot via its
+ *     `WHERE timezone='UTC'` filter), so a stale gate just costs a no-op.
  *
  * Translation namespace: `dashboard` (see `lib/i18n/messages/{en,es,pt-BR}.json`).
  */
@@ -137,6 +143,14 @@ export default async function DashboardPage() {
             matches scheduled) lives inside the widget — see
             `matches.dashboardWidget.emptyState`. */}
         <UpcomingMatchesWidget participantTz={participant.timezone} locale={locale} />
+
+        {/* T044 (US-MB / FR-M14) — renderless side-effect Client Component
+            that auto-detects the browser timezone on first dashboard mount.
+            Gated on the participant still holding the default 'UTC' value
+            so we don't fire an RPC that's guaranteed to no-op. The RPC
+            itself (`set_timezone`) is internally idempotent via its
+            `WHERE timezone='UTC'` filter, so a stale gate is harmless. */}
+        {participant.timezone === 'UTC' && <TimezoneAutoDetect />}
       </main>
     </DashboardClient>
   );
