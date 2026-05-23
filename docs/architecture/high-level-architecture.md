@@ -796,7 +796,7 @@ bypass scenarios:
 | NFR-007 | Auditability | The system must provide evidence for predictions, edits, locks, overrides, and scoring calculations. | High |
 | NFR-008 | Maintainability | Rules and scoring values should be configurable or isolated enough to change without broad UI rewrites. | Medium |
 | NFR-009 | Accessibility | The application should be usable with keyboard navigation, sufficient contrast, clear labels, and responsive layouts. | Medium |
-| NFR-010 | Localization | The architecture should allow English and Spanish labels or future localization if Nortal decides to support multiple regions. | Medium |
+| NFR-010 | Localization | The application must support English (en), Spanish (es), and Brazilian Portuguese (pt-BR) labels at launch, with browser locale auto-detection (Accept-Language) and English fallback. | High |
 | NFR-011 | Observability | Operational logs, metrics, and alerts should identify integration failures, scoring failures, and traffic anomalies. | High |
 | NFR-012 | Recoverability | Administrators should be able to recover from provider outages, incorrect results, and failed recalculation jobs. | High |
 

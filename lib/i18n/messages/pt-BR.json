@@ -1,0 +1,70 @@
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Faça palpites para cada jogo da Copa do Mundo FIFA 2026 e compita com seus colegas."
+  },
+  "signIn": {
+    "label": "Entrar com a Microsoft",
+    "loading": "Entrando…",
+    "error": "Não foi possível iniciar o login. Tente novamente."
+  },
+  "dashboard": {
+    "greeting": "Olá, {name}",
+    "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado.",
+    "adminNavLabel": "Console de administração"
+  },
+  "welcome": {
+    "title": "Bem-vindo ao World Cup Madness",
+    "intro": "Veja como o bolão funciona.",
+    "scoringExact": "Placar exato: 10 pontos por jogo",
+    "scoringOutcome": "Apenas o resultado correto (vitória, derrota ou empate): 5 pontos",
+    "scoringWrong": "Resultado errado: 0 pontos",
+    "scoringFinal": "Palpites finais (campeão, vice-campeão, artilheiro, melhor jogador): 20 pontos cada",
+    "lockWindow": "Os palpites de jogos são bloqueados 60 minutos antes do pontapé inicial.",
+    "deadline": "Os palpites finais são bloqueados no primeiro pontapé inicial do torneio.",
+    "gotIt": "Entendi"
+  },
+  "profile": {
+    "heading": "Seu perfil",
+    "emailLabel": "E-mail",
+    "displayNameLabel": "Nome de exibição",
+    "saveButton": "Salvar",
+    "savingButton": "Salvando…",
+    "successToast": "Nome de exibição atualizado.",
+    "errorEmpty": "O nome de exibição não pode ficar vazio.",
+    "errorTooLong": "O nome de exibição deve ter 100 caracteres ou menos.",
+    "errorNotFound": "Não foi possível localizar sua conta de participante. Por favor, saia e entre novamente.",
+    "errorGeneric": "Não foi possível atualizar o nome de exibição. Por favor, tente novamente."
+  },
+  "accessDenied": {
+    "heading": "Este torneio é para colaboradores da Nortal",
+    "body": "O login foi recusado porque sua conta Microsoft não pertence ao tenant da Nortal no Entra.",
+    "retryLabel": "Entrar com outra conta",
+    "contact": "Se você acredita que isso é um engano, entre em contato com o administrador do torneio."
+  },
+  "authError": {
+    "heading": "O login não foi concluído",
+    "body": "Algo interrompeu o login. Isso costuma ser temporário — por favor, tente novamente.",
+    "retryLabel": "Tentar login novamente",
+    "contact": "Se o problema persistir, entre em contato com o administrador do torneio.",
+    "statusLinkLabel": "Ver status do serviço"
+  },
+  "privacy": {
+    "linkLabel": "Aviso de privacidade",
+    "heading": "Aviso de privacidade",
+    "intro": "World Cup Madness é um bolão interno da Nortal. Veja o que coletamos, por quê e quem pode ver.",
+    "dataCollectedHeading": "Dados que coletamos",
+    "dataCollectedBody": "Seu endereço de e-mail corporativo e seu nome de exibição da Microsoft. Recebemos ambos da sua conta corporativa Microsoft quando você entra. Não coletamos mais nada do seu perfil Microsoft.",
+    "purposeHeading": "Por que coletamos",
+    "purposeBody": "O e-mail é usado para verificar se você é um colaborador elegível da Nortal. O nome de exibição aparece na classificação para que seus colegas possam reconhecê-lo. Ambos, junto com os eventos de login e de edição de palpites, são registrados em um log de auditoria para que o resultado do torneio possa ser revisado.",
+    "audienceHeading": "Quem pode ver seus dados",
+    "audienceBody": "Outros participantes veem seu nome de exibição e seus pontos na classificação. Os administradores do torneio podem ver seu endereço de e-mail para fins de suporte e elegibilidade. Nenhum serviço externo recebe seus dados.",
+    "legalBasisHeading": "Base legal",
+    "legalBasisBody": "Processamos esses dados com base no interesse legítimo, no contexto do seu vínculo empregatício com a Nortal. A participação no bolão é voluntária; não há etapa de consentimento separada para o MVP.",
+    "retentionHeading": "Por quanto tempo guardamos seus dados",
+    "retentionBody": "O período de retenção dos palpites, pontuações e dados de auditoria após o término do torneio será definido pelas equipes de Privacidade e Jurídico da Nortal antes do lançamento e adicionado aqui.",
+    "backLabel": "Voltar para o login",
+    "welcomeSummary": "Coletamos seu e-mail corporativo e seu nome de exibição para verificar a elegibilidade e mostrar seu nome na classificação.",
+    "learnMore": "Saiba mais"
+  }
+}
