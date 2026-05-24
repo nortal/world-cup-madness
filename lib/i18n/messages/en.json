@@ -125,5 +125,24 @@
     "backLabel": "Back to sign-in",
     "welcomeSummary": "We collect your corporate email and display name to verify eligibility and show your name on the leaderboard.",
     "learnMore": "Learn more"
+  },
+  "predictions": {
+    "formHeading": "Your prediction",
+    "homeLabel": "Home",
+    "awayLabel": "Away",
+    "submitButton": "Save",
+    "submittingButton": "Saving…",
+    "lockedHeading": "Prediction locked",
+    "lockedNoPredictionMessage": "Predictions closed for this match. You did not submit one.",
+    "lockedNowMessage": "Editing closed (less than 60 minutes to kickoff).",
+    "lockingNow": "Locking now",
+    "locksInHoursMinutes": "Locks in {hours}h {minutes}m",
+    "locksInMinutes": "Locks in {minutes}m",
+    "successToast": "Prediction saved.",
+    "errorOutOfRange": "Scores must be whole numbers between 0 and 20.",
+    "errorLocked": "Editing window closed; this prediction is locked.",
+    "errorMatchNotFound": "We couldn’t find this match.",
+    "errorParticipantNotFound": "Your participant account couldn’t be located. Please sign out and back in.",
+    "errorGeneric": "Could not save your prediction. Please try again."
   }
 }

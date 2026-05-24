@@ -125,5 +125,24 @@
     "backLabel": "Volver al inicio de sesión",
     "welcomeSummary": "Recopilamos tu correo corporativo y tu nombre para mostrar para verificar la elegibilidad y mostrar tu nombre en la tabla de clasificación.",
     "learnMore": "Más información"
+  },
+  "predictions": {
+    "formHeading": "Tu pronóstico",
+    "homeLabel": "Local",
+    "awayLabel": "Visitante",
+    "submitButton": "Guardar",
+    "submittingButton": "Guardando…",
+    "lockedHeading": "Pronóstico bloqueado",
+    "lockedNoPredictionMessage": "Los pronósticos para este partido están cerrados. No enviaste el tuyo.",
+    "lockedNowMessage": "Edición cerrada (menos de 60 minutos para el inicio).",
+    "lockingNow": "Bloqueando ahora",
+    "locksInHoursMinutes": "Se bloquea en {hours} h {minutes} min",
+    "locksInMinutes": "Se bloquea en {minutes} min",
+    "successToast": "Pronóstico guardado.",
+    "errorOutOfRange": "Los marcadores deben ser números enteros entre 0 y 20.",
+    "errorLocked": "Ventana de edición cerrada; este pronóstico está bloqueado.",
+    "errorMatchNotFound": "No pudimos encontrar este partido.",
+    "errorParticipantNotFound": "No se pudo localizar tu cuenta de participante. Cierra sesión e inicia sesión de nuevo.",
+    "errorGeneric": "No se pudo guardar tu pronóstico. Inténtalo de nuevo."
   }
 }

@@ -1,9 +1,12 @@
 import { notFound, redirect } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
 
+import LockedPredictionDisplay from '@/components/predictions/LockedPredictionDisplay';
+import PredictionForm from '@/components/predictions/PredictionForm';
 import MatchDetailCard from '@/components/matches/MatchDetailCard';
 import { defaultLocale, isLocale, type Locale } from '@/lib/i18n/locales';
 import type { MatchStatus } from '@/lib/matches/lock-badge';
+import { isPredictionLocked } from '@/lib/predictions/lock-state';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -115,10 +118,11 @@ export default async function MatchDetailPage({ params }: PageProps) {
     redirect('/');
   }
 
-  // Project only the participant column this page needs (timezone).
+  // Project only the participant columns this page needs (timezone + id for
+  // the prediction lookup).
   const { data: participant, error: participantError } = await supabase
     .from('participants')
-    .select('timezone')
+    .select('id, timezone')
     .eq('auth_user_id', user.id)
     .maybeSingle();
 
@@ -232,6 +236,29 @@ export default async function MatchDetailPage({ params }: PageProps) {
 
   const nowUtc = new Date();
 
+  // Fetch the participant's existing prediction for this match (if any) so
+  // the form pre-fills + the locked-state renders the right values.
+  // RLS scopes this to the participant's own rows.
+  const { data: existingPrediction } = await supabase
+    .from('predictions')
+    .select('predicted_home_score, predicted_away_score')
+    .eq('participant_id', participant.id)
+    .eq('match_id', match.id)
+    .maybeSingle();
+
+  const predictionForUi = existingPrediction
+    ? {
+        home: existingPrediction.predicted_home_score,
+        away: existingPrediction.predicted_away_score,
+      }
+    : null;
+
+  // Server-side lock decision (BR-LOCK-001 trusted-time). The RPC re-checks
+  // on submit; this gate decides which sub-component to mount.
+  const lockedNow = match.kickoffUtc
+    ? isPredictionLocked(match.kickoffUtc, nowUtc)
+    : true;
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
       <MatchDetailCard
@@ -240,6 +267,22 @@ export default async function MatchDetailPage({ params }: PageProps) {
         participantTz={participant.timezone}
         locale={locale}
       />
+
+      {/*
+        Feature 003 US-PA mount point:
+          - Locked + existing prediction → readonly display.
+          - Locked + no prediction → form renders a "no prediction submitted" message internally.
+          - Editable → form (with optional pre-fill).
+      */}
+      {lockedNow && predictionForUi !== null ? (
+        <LockedPredictionDisplay prediction={predictionForUi} />
+      ) : match.kickoffUtc ? (
+        <PredictionForm
+          matchId={match.id}
+          kickoffUtc={match.kickoffUtc.toISOString()}
+          initialPrediction={predictionForUi}
+        />
+      ) : null}
     </main>
   );
 }

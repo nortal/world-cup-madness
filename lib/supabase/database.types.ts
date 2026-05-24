@@ -787,6 +787,10 @@ export type Database = {
       skip:
         | { Args: { "": string }; Returns: string }
         | { Args: { how_many: number; why: string }; Returns: string }
+      submit_prediction: {
+        Args: { p_away: number; p_home: number; p_match_id: string }
+        Returns: Json
+      }
       throws_ok: { Args: { "": string }; Returns: string }
       todo:
         | { Args: { how_many: number }; Returns: boolean[] }

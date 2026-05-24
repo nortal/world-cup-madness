@@ -125,5 +125,24 @@
     "backLabel": "Voltar para o login",
     "welcomeSummary": "Coletamos seu e-mail corporativo e seu nome de exibição para verificar a elegibilidade e mostrar seu nome na classificação.",
     "learnMore": "Saiba mais"
+  },
+  "predictions": {
+    "formHeading": "Seu palpite",
+    "homeLabel": "Casa",
+    "awayLabel": "Fora",
+    "submitButton": "Salvar",
+    "submittingButton": "Salvando…",
+    "lockedHeading": "Palpite bloqueado",
+    "lockedNoPredictionMessage": "Os palpites para esta partida estão fechados. Você não enviou o seu.",
+    "lockedNowMessage": "Edição fechada (menos de 60 minutos para o início).",
+    "lockingNow": "Bloqueando agora",
+    "locksInHoursMinutes": "Bloqueia em {hours}h {minutes}min",
+    "locksInMinutes": "Bloqueia em {minutes}min",
+    "successToast": "Palpite salvo.",
+    "errorOutOfRange": "Os placares devem ser números inteiros entre 0 e 20.",
+    "errorLocked": "Janela de edição fechada; este palpite está bloqueado.",
+    "errorMatchNotFound": "Não conseguimos encontrar esta partida.",
+    "errorParticipantNotFound": "Sua conta de participante não pôde ser localizada. Saia e entre novamente.",
+    "errorGeneric": "Não foi possível salvar seu palpite. Tente novamente."
   }
 }
