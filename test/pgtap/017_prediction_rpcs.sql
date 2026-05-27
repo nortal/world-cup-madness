@@ -37,7 +37,7 @@
 
 BEGIN;
 
-SELECT plan(16);
+SELECT plan(23);
 
 -- ---------------------------------------------------------------------------
 -- Fixed UUIDs for deterministic assertions
@@ -430,11 +430,109 @@ SELECT cmp_ok(
 RELEASE SAVEPOINT sp_test12;
 
 -- ===========================================================================
--- submit_final_prediction() — T038 will add tests here
+-- submit_final_prediction() — T038 (US-PB)
 -- ===========================================================================
--- Future contributor: add assertions for submit_final_prediction below this
--- divider, bump the plan(N) count, and seed any additional fixtures
--- (players, tournament_config phase flags) directly in this file.
+-- Coverage:
+--   T13 — function exists
+--   T14 — function is SECURITY DEFINER
+--   T15 — authenticated has EXECUTE
+--   T16 — partial submit (only champion + runner_up) returns success + action=created
+--   T17 — full submit (all 4 picks) returns action=updated on second call
+--   T18 — CHECK violation: champion == runner_up rejected
+--   T19 — Lock: when min(kickoff_utc) is in the past → FINAL_PREDICTIONS_LOCKED
+
+-- Test 13 — function exists
+SELECT has_function(
+    'public', 'submit_final_prediction', ARRAY['uuid','uuid','uuid','uuid'],
+    'TEST 13: submit_final_prediction(uuid, uuid, uuid, uuid) is defined'
+);
+
+-- Test 14 — SECURITY DEFINER
+SELECT is(
+    (SELECT prosecdef FROM pg_proc WHERE proname = 'submit_final_prediction'),
+    TRUE,
+    'TEST 14: submit_final_prediction is SECURITY DEFINER'
+);
+
+-- Test 15 — EXECUTE grant to authenticated
+SELECT ok(
+    has_function_privilege('authenticated',
+        'public.submit_final_prediction(uuid, uuid, uuid, uuid)', 'EXECUTE'),
+    'TEST 15: authenticated has EXECUTE on submit_final_prediction'
+);
+
+-- Resolve two distinct team UUIDs for the picks (champion, runner_up).
+\set fp_champion_id ''
+\set fp_runner_up_id ''
+SELECT set_config('test.fp_champion_id', (SELECT id::text FROM teams WHERE tla='ENG'), true);
+SELECT set_config('test.fp_runner_up_id', (SELECT id::text FROM teams WHERE tla='FRA'), true);
+
+-- Spoof participant A's JWT for the submit calls (re-use the same A from earlier tests).
+SELECT test_set_jwt(:'a_user_id'::uuid, :'nortal_tid'::uuid, :'a_oid'::uuid, 'a@nortal.com');
+SET LOCAL ROLE authenticated;
+
+-- Test 16 — partial submit (only champion + runner_up; players left NULL) → success, action=created
+-- Note: there are zero non-cancelled matches at this point (test fixture seeded
+-- only the M61/M60/M59 trio above which are all 'scheduled'). The "min kickoff
+-- in the past" lock check passes because the earliest scheduled kickoff is in
+-- the future (+59m).
+SELECT is(
+    (SELECT submit_final_prediction(
+        current_setting('test.fp_champion_id')::uuid,
+        current_setting('test.fp_runner_up_id')::uuid,
+        NULL, NULL) ->> 'action'),
+    'created',
+    'TEST 16: partial submit_final_prediction (champion + runner_up only) returns action=created'
+);
+
+-- Test 17 — re-submit same row with one extra pick → action=updated
+SELECT is(
+    (SELECT submit_final_prediction(
+        current_setting('test.fp_champion_id')::uuid,
+        current_setting('test.fp_runner_up_id')::uuid,
+        NULL, NULL) ->> 'action'),
+    'updated',
+    'TEST 17: second submit_final_prediction for same participant returns action=updated'
+);
+
+-- Test 18 — CHECK violation: champion == runner_up
+RESET ROLE;
+SELECT test_set_jwt(:'a_user_id'::uuid, :'nortal_tid'::uuid, :'a_oid'::uuid, 'a@nortal.com');
+SET LOCAL ROLE authenticated;
+
+SELECT throws_ok(
+    format('SELECT submit_final_prediction(%L::uuid, %L::uuid, NULL, NULL)',
+        current_setting('test.fp_champion_id'),
+        current_setting('test.fp_champion_id')),  -- same UUID for both
+    '23514',  -- check_violation from final_predictions_champion_distinct_runner_up
+    NULL,
+    'TEST 18: submit_final_prediction with champion == runner_up raises check_violation'
+);
+
+-- Test 19 — Lock: insert a match in the PAST, then attempt submit → FINAL_PREDICTIONS_LOCKED
+RESET ROLE;
+SAVEPOINT sp_lock_test;
+INSERT INTO matches (id, provider_id, home_team_id, away_team_id, stage, kickoff_utc, status)
+VALUES (
+    gen_random_uuid(), 95099,
+    (SELECT id FROM teams WHERE tla='ENG'),
+    (SELECT id FROM teams WHERE tla='GER'),
+    'group',
+    now() - interval '1 hour',
+    'scheduled'
+);
+SELECT test_set_jwt(:'a_user_id'::uuid, :'nortal_tid'::uuid, :'a_oid'::uuid, 'a@nortal.com');
+SET LOCAL ROLE authenticated;
+
+SELECT throws_ok(
+    format('SELECT submit_final_prediction(%L::uuid, NULL, NULL, NULL)',
+        current_setting('test.fp_champion_id')),
+    '23514',
+    NULL,
+    'TEST 19: submit_final_prediction after first kickoff raises FINAL_PREDICTIONS_LOCKED (BR-LOCK-005)'
+);
+RESET ROLE;
+ROLLBACK TO SAVEPOINT sp_lock_test;
 
 -- ===========================================================================
 -- set_tournament_winner() + recalculate_all_scores() — T055 will add tests here

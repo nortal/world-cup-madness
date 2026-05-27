@@ -787,6 +787,15 @@ export type Database = {
       skip:
         | { Args: { "": string }; Returns: string }
         | { Args: { how_many: number; why: string }; Returns: string }
+      submit_final_prediction: {
+        Args: {
+          p_best_player?: string
+          p_champion?: string
+          p_runner_up?: string
+          p_top_scorer?: string
+        }
+        Returns: Json
+      }
       submit_prediction: {
         Args: { p_away: number; p_home: number; p_match_id: string }
         Returns: Json

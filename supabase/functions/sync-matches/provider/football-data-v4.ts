@@ -66,6 +66,7 @@ import { fetchWithRetry, type RetryableError } from '../lib/retry.ts';
 // survive the bundling step (the runtime copies `.ts` files to
 // /var/tmp/sb-compile-edge-runtime/.../ and leaves loose JSON behind).
 import sampleEnvelope from '../__fixtures__/v4-sample.json' with { type: 'json' };
+import squadsFixture from '../__fixtures__/v4-squads-sample.json' with { type: 'json' };
 
 // ---------------------------------------------------------------------------
 // Wire-shape types (football-data.org v4)
@@ -167,6 +168,18 @@ export type FetchMatchesResult = {
   rawCount: number;
 };
 
+export type NormalisedPlayer = {
+  providerPlayerId: number;
+  providerTeamId: number;
+  name: string;
+  position: 'Goalkeeper' | 'Defender' | 'Midfielder' | 'Attacker' | null;
+};
+
+export type FetchSquadsResult = {
+  players: NormalisedPlayer[];
+  rawTeamCount: number;
+};
+
 export type ProviderFetchError = {
   category: 'provider.4xx' | 'provider.5xx' | 'provider.rate-limit' | 'network' | 'fixture' | 'normalisation';
   message: string;
@@ -177,6 +190,137 @@ export type ProviderFetchError = {
 // ---------------------------------------------------------------------------
 
 const PROVIDER_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
+
+/**
+ * Fetch each team's squad (feature 003 US-PB / FR-P20).
+ *
+ * For every team in `providerTeamIds`, calls `/v4/teams/{id}/squad` (or
+ * reads the squad from the bundled fixture when SYNC_FIXTURE_MODE=1) and
+ * returns a flat NormalisedPlayer[] for the Edge Function to UPSERT into
+ * `players`.
+ *
+ * Fixture mode: reads `__fixtures__/v4-squads-sample.json` (32 teams × 5
+ * players seeded for local dev). Live mode: sequential per-team requests
+ * honouring the 10 req/min rate limit via the existing retry helper.
+ */
+export async function fetchSquads(providerTeamIds: number[]): Promise<FetchSquadsResult> {
+  const fixture = (Deno.env.get('SYNC_FIXTURE_MODE') ?? '') === '1';
+  if (fixture) {
+    return readSquadsFromFixture(providerTeamIds);
+  }
+  return fetchSquadsFromProvider(providerTeamIds);
+}
+
+type ProviderSquadMember = {
+  id: number;
+  name: string;
+  position?: string | null;
+};
+
+type ProviderSquadResponse = {
+  id: number;
+  name: string;
+  tla: string;
+  squad?: ProviderSquadMember[];
+};
+
+type SquadsFixtureShape = {
+  squadsByTeamId: Record<string, ProviderSquadResponse>;
+};
+
+function readSquadsFromFixture(providerTeamIds: number[]): FetchSquadsResult {
+  const fixture = squadsFixture as SquadsFixtureShape;
+  if (!fixture || typeof fixture.squadsByTeamId !== 'object') {
+    throw makeError('fixture', 'Bundled squads fixture is malformed (expected {squadsByTeamId: {...}})');
+  }
+
+  const players: NormalisedPlayer[] = [];
+  let rawTeamCount = 0;
+
+  for (const tid of providerTeamIds) {
+    const team = fixture.squadsByTeamId[String(tid)];
+    if (!team) continue; // fixture covers most teams; tolerate gaps
+    rawTeamCount += 1;
+    for (const member of team.squad ?? []) {
+      players.push(normalisePlayer(member, tid));
+    }
+  }
+
+  return { players, rawTeamCount };
+}
+
+async function fetchSquadsFromProvider(providerTeamIds: number[]): Promise<FetchSquadsResult> {
+  const apiKey = Deno.env.get('FOOTBALL_DATA_API_KEY') ?? '';
+  if (apiKey.length === 0) {
+    throw makeError('provider.4xx', 'FOOTBALL_DATA_API_KEY is not set (and SYNC_FIXTURE_MODE is not "1")');
+  }
+
+  const players: NormalisedPlayer[] = [];
+  let rawTeamCount = 0;
+
+  // Sequential per-team requests so the existing retry helper's Retry-After
+  // handling keeps us inside the 10 req/min ceiling. Parallel would race
+  // the budget.
+  for (const tid of providerTeamIds) {
+    let response: Response;
+    try {
+      response = await fetchWithRetry(`https://api.football-data.org/v4/teams/${tid}`, {
+        method: 'GET',
+        headers: { 'X-Auth-Token': apiKey, Accept: 'application/json' },
+      });
+    } catch (err) {
+      const re = err as Error & Partial<RetryableError>;
+      throw makeError(
+        mapRetryCategory(re.category ?? 'network'),
+        truncateMessage(re.message ?? 'fetchWithRetry threw without a message'),
+      );
+    }
+    let json: unknown;
+    try {
+      json = await response.json();
+    } catch (err) {
+      throw makeError('provider.5xx', `Failed to parse squad JSON for team ${tid}: ${(err as Error).message}`);
+    }
+    if (!isSquadShape(json)) {
+      throw makeError('normalisation', `Squad response for team ${tid} did not match v4 shape`);
+    }
+    rawTeamCount += 1;
+    for (const member of (json as ProviderSquadResponse).squad ?? []) {
+      players.push(normalisePlayer(member, tid));
+    }
+  }
+
+  return { players, rawTeamCount };
+}
+
+function normalisePlayer(member: ProviderSquadMember, providerTeamId: number): NormalisedPlayer {
+  // football-data.org returns positions like "Goalkeeper", "Centre-Back",
+  // "Left-Back", "Defensive Midfield", "Right Winger", etc. We coarsen them
+  // to the four-bucket enum the players table allows (Goalkeeper / Defender
+  // / Midfielder / Attacker) so the picker UI can show clean filters and
+  // the seed fixture stays simple.
+  const raw = (member.position ?? '').toLowerCase();
+  let coarsened: NormalisedPlayer['position'] = null;
+  if (raw === '') coarsened = null;
+  else if (raw.includes('keeper')) coarsened = 'Goalkeeper';
+  else if (raw.includes('back') || raw.includes('defender') || raw.includes('defence') || raw === 'defender') coarsened = 'Defender';
+  else if (raw.includes('mid')) coarsened = 'Midfielder';
+  else if (raw.includes('forward') || raw.includes('striker') || raw.includes('winger') || raw.includes('attack')) coarsened = 'Attacker';
+  else if (raw === 'goalkeeper' || raw === 'defender' || raw === 'midfielder' || raw === 'attacker') coarsened = raw.charAt(0).toUpperCase() + raw.slice(1) as NormalisedPlayer['position'];
+
+  return {
+    providerPlayerId: member.id,
+    providerTeamId,
+    name: member.name,
+    position: coarsened,
+  };
+}
+
+function isSquadShape(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false;
+  const v = value as { id?: unknown; squad?: unknown };
+  return typeof v.id === 'number' && (v.squad === undefined || Array.isArray(v.squad));
+}
 
 /**
  * Fetch the WC 2026 fixture envelope and normalise it. Honours

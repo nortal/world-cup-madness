@@ -150,3 +150,129 @@ GRANT EXECUTE ON FUNCTION submit_prediction(UUID, INTEGER, INTEGER) TO authentic
 
 COMMENT ON FUNCTION submit_prediction(UUID, INTEGER, INTEGER) IS
     'feature 003 US-PA: insert or update a participant''s match prediction. Server-side lock at kickoff_utc - 60 min (strict, per BR-LOCK-002+003). Returns {outcome, prediction_id, action, predicted_home_score, predicted_away_score, locks_at}.';
+
+-- ============================================================================
+-- submit_final_prediction — feature 003 US-PB (T037)
+-- ============================================================================
+-- Per contracts/rpc-submit-final-prediction.md. Upsert one row in
+-- final_predictions (UNIQUE on participant_id, one row per participant).
+-- All four picks nullable so partial submissions are allowed.
+--
+-- Lock semantic (BR-LOCK-005): editable only BEFORE the first non-cancelled
+-- kickoff. Once any non-cancelled match starts (now() >= min(kickoff_utc
+-- WHERE status != 'cancelled')), all four picks are immutable.
+--
+-- The CHECK constraint on final_predictions enforces champion ≠ runner_up
+-- (when both non-null); we don't re-check here.
+CREATE OR REPLACE FUNCTION submit_final_prediction(
+    p_champion       UUID DEFAULT NULL,
+    p_runner_up      UUID DEFAULT NULL,
+    p_top_scorer     UUID DEFAULT NULL,
+    p_best_player    UUID DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+    v_user_id          UUID := auth.uid();
+    v_participant_id   UUID;
+    v_first_kickoff    TIMESTAMPTZ;
+    v_final_prediction_id UUID;
+    v_inserted         BOOLEAN;
+BEGIN
+    -- 1. Resolve participant.
+    SELECT id INTO v_participant_id
+    FROM participants
+    WHERE auth_user_id = v_user_id AND status = 'active';
+
+    IF v_participant_id IS NULL THEN
+        RAISE EXCEPTION 'PARTICIPANT_NOT_FOUND'
+            USING ERRCODE = 'no_data_found',
+                  HINT    = 'No active participant row for the current auth.uid().';
+    END IF;
+
+    -- 2. Lock check: the first non-cancelled match must NOT yet have kicked off.
+    -- BR-LOCK-005: editable only BEFORE the first official match kickoff.
+    SELECT min(kickoff_utc) INTO v_first_kickoff
+    FROM matches
+    WHERE status != 'cancelled';
+
+    IF v_first_kickoff IS NOT NULL AND now() >= v_first_kickoff THEN
+        RAISE EXCEPTION 'FINAL_PREDICTIONS_LOCKED'
+            USING ERRCODE = 'check_violation',
+                  HINT    = format('First match already kicked off at %s.', v_first_kickoff);
+    END IF;
+
+    -- 3. UPSERT — xmax = 0 distinguishes insert from update.
+    INSERT INTO final_predictions (
+        participant_id,
+        champion_team_id,
+        runner_up_team_id,
+        top_scorer_player_id,
+        best_player_player_id
+    )
+    VALUES (
+        v_participant_id,
+        p_champion,
+        p_runner_up,
+        p_top_scorer,
+        p_best_player
+    )
+    ON CONFLICT (participant_id) DO UPDATE
+        SET champion_team_id      = EXCLUDED.champion_team_id,
+            runner_up_team_id     = EXCLUDED.runner_up_team_id,
+            top_scorer_player_id  = EXCLUDED.top_scorer_player_id,
+            best_player_player_id = EXCLUDED.best_player_player_id,
+            updated_at            = now()
+    RETURNING id, (xmax = 0) INTO v_final_prediction_id, v_inserted;
+
+    -- 4. Audit emit.
+    INSERT INTO audit_log (
+        action,
+        actor_oid,
+        actor_email,
+        participant_id,
+        entity_type,
+        entity_id,
+        new_value
+    )
+    SELECT
+        CASE WHEN v_inserted
+             THEN 'final_prediction.created'
+             ELSE 'final_prediction.updated'
+        END,
+        p.oid,
+        p.email,
+        v_participant_id,
+        'final_predictions',
+        v_final_prediction_id,
+        jsonb_build_object(
+            'champion_team_id',      p_champion,
+            'runner_up_team_id',     p_runner_up,
+            'top_scorer_player_id',  p_top_scorer,
+            'best_player_player_id', p_best_player
+        )
+    FROM participants p WHERE p.id = v_participant_id;
+
+    RETURN jsonb_build_object(
+        'outcome',              'success',
+        'final_prediction_id',  v_final_prediction_id,
+        'action',               CASE WHEN v_inserted THEN 'created' ELSE 'updated' END,
+        'picks', jsonb_build_object(
+            'champion_team_id',      p_champion,
+            'runner_up_team_id',     p_runner_up,
+            'top_scorer_player_id',  p_top_scorer,
+            'best_player_player_id', p_best_player
+        ),
+        'locks_at',             v_first_kickoff
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION submit_final_prediction(UUID, UUID, UUID, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION submit_final_prediction(UUID, UUID, UUID, UUID) TO authenticated;
+
+COMMENT ON FUNCTION submit_final_prediction(UUID, UUID, UUID, UUID) IS
+    'feature 003 US-PB: insert or update a participant''s tournament-wide predictions (champion/runner-up/top-scorer/best-player). All 4 nullable for partial submits. Lock: BEFORE first non-cancelled kickoff (BR-LOCK-005).';

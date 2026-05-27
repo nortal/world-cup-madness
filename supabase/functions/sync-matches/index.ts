@@ -37,7 +37,13 @@
 
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-import { fetchMatches, type FetchMatchesResult, type NormalisedMatch } from './provider/football-data-v4.ts';
+import {
+  fetchMatches,
+  fetchSquads,
+  type FetchMatchesResult,
+  type NormalisedMatch,
+  type NormalisedPlayer,
+} from './provider/football-data-v4.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,11 +54,18 @@ type SyncAction = 'bootstrap' | 'incremental-sync' | 'manual-resync';
 const ALLOWED_ACTIONS: readonly SyncAction[] = ['bootstrap', 'incremental-sync', 'manual-resync'];
 
 type SyncSuccessResponse = {
-  outcome: 'success';
+  outcome: 'success' | 'error';
   integration_run_id: number;
   records_processed: number;
   records_unchanged: number;
   duration_ms: number;
+  // Feature 003 US-PB squad sync — combined records_* sums above, broken
+  // out here so operators can disambiguate match vs player counts. Squad-
+  // sync failures degrade outcome to 'error' but still write the partial
+  // matches sync, so the response shape stays identical to success.
+  matches_processed?: number;
+  players_processed?: number;
+  error_message?: string;
 };
 
 type SyncSkippedResponse = {
@@ -257,21 +270,45 @@ async function runSync(supabase: SupabaseClient, action: SyncAction): Promise<Re
       });
     }
 
-    // Step 8 — finalise the integration_runs row + return.
+    // Step 8 — feature 003 US-PB squad sync. Fetch each team's squad and
+    // UPSERT into `players`. Combined counts roll into integration_runs.
+    // A squad-sync failure is recorded but does NOT roll back the match
+    // sync (per FR-P21, the integration_runs row reports combined totals;
+    // partial success is acceptable so the catalog read path stays useful
+    // even when the player picker has stale data).
+    const teamIds = Array.from(new Set(fetched.teams.map((t) => t.providerTeamId)));
+    let squadsResult: PlayersUpsertResult;
+    try {
+      const { players, rawTeamCount: _rawTeamCount } = await fetchSquads(teamIds);
+      squadsResult = await upsertPlayers(supabase, players);
+    } catch (err) {
+      const category = (err as Error & { category?: string }).category ?? 'network';
+      console.error('squad-sync failed', { category, message: (err as Error).message });
+      squadsResult = { processed: 0, unchanged: 0, error: `squad-sync: ${(err as Error).message}` };
+    }
+
+    const totalProcessed = matchesResult.processed + squadsResult.processed;
+    const totalUnchanged = matchesResult.unchanged + squadsResult.unchanged;
+    const errorMessage = squadsResult.error ?? null;
+
+    // Step 9 — finalise the integration_runs row + return.
     await finishIntegrationRun(supabase, runId, {
-      status: 'success',
-      records_processed: matchesResult.processed,
-      records_unchanged: matchesResult.unchanged,
-      error_message: null,
+      status: errorMessage === null ? 'success' : 'error',
+      records_processed: totalProcessed,
+      records_unchanged: totalUnchanged,
+      error_message: errorMessage,
     });
 
     const durationMs = Date.now() - startedAt.getTime();
     return jsonResponse({
-      outcome: 'success',
+      outcome: errorMessage === null ? 'success' : 'error',
       integration_run_id: runId,
-      records_processed: matchesResult.processed,
-      records_unchanged: matchesResult.unchanged,
+      records_processed: totalProcessed,
+      records_unchanged: totalUnchanged,
+      matches_processed: matchesResult.processed,
+      players_processed: squadsResult.processed,
       duration_ms: durationMs,
+      ...(errorMessage !== null ? { error_message: errorMessage } : {}),
     });
   } catch (err) {
     // Unhandled throw mid-sync. Best-effort: mark the in-flight row as
@@ -508,6 +545,99 @@ async function upsertMatches(
   }
 
   return { processed: matches.length, unchanged, error: null };
+}
+
+// ---------------------------------------------------------------------------
+// upsertPlayers — squad sync into players table (feature 003 US-PB / FR-P20)
+// ---------------------------------------------------------------------------
+
+type PlayersUpsertResult = {
+  processed: number;
+  unchanged: number;
+  error: string | null;
+};
+
+async function upsertPlayers(
+  supabase: SupabaseClient,
+  players: NormalisedPlayer[],
+): Promise<PlayersUpsertResult> {
+  if (players.length === 0) {
+    return { processed: 0, unchanged: 0, error: null };
+  }
+
+  // Resolve provider_team_id → team UUID for the FK. The team rows already
+  // exist (seed in migration 0017 + sync UPSERTs from upsertTeams above).
+  const teamIds = Array.from(new Set(players.map((p) => p.providerTeamId)));
+  const { data: teamRows, error: teamsErr } = await supabase
+    .from('teams')
+    .select('id, provider_team_id')
+    .in('provider_team_id', teamIds);
+  if (teamsErr !== null) {
+    return { processed: 0, unchanged: 0, error: `team lookup for players: ${teamsErr.message}` };
+  }
+  const teamUuidByProviderId = new Map<number, string>();
+  for (const t of teamRows ?? []) {
+    teamUuidByProviderId.set(t.provider_team_id as number, t.id as string);
+  }
+
+  // Pre-flight read of existing players for field-level diff (records_unchanged).
+  const providerIds = players.map((p) => p.providerPlayerId);
+  const { data: existingRows, error: existingErr } = await supabase
+    .from('players')
+    .select('provider_player_id, name, position, team_id')
+    .in('provider_player_id', providerIds);
+  if (existingErr !== null) {
+    return { processed: 0, unchanged: 0, error: `existing-players lookup: ${existingErr.message}` };
+  }
+  type ExistingShape = {
+    provider_player_id: number;
+    name: string;
+    position: string | null;
+    team_id: string;
+  };
+  const existingByProviderId = new Map<number, ExistingShape>();
+  for (const r of (existingRows ?? []) as ExistingShape[]) {
+    existingByProviderId.set(r.provider_player_id, r);
+  }
+
+  const payload: Array<Record<string, unknown>> = [];
+  let unchanged = 0;
+  for (const p of players) {
+    const teamUuid = teamUuidByProviderId.get(p.providerTeamId);
+    if (teamUuid === undefined) {
+      // Player references a team we don't have. Skip rather than fail the
+      // whole sync; log via the returned error if every player skipped.
+      continue;
+    }
+
+    const prior = existingByProviderId.get(p.providerPlayerId);
+    const isUnchanged =
+      prior !== undefined &&
+      prior.name === p.name &&
+      prior.position === p.position &&
+      prior.team_id === teamUuid;
+    if (isUnchanged) unchanged += 1;
+
+    payload.push({
+      provider_player_id: p.providerPlayerId,
+      name: p.name,
+      position: p.position,
+      team_id: teamUuid,
+    });
+  }
+
+  if (payload.length === 0) {
+    return { processed: 0, unchanged: 0, error: 'all players skipped — no matching teams in players upsert' };
+  }
+
+  const { error: upsertErr } = await supabase
+    .from('players')
+    .upsert(payload, { onConflict: 'provider_player_id' });
+  if (upsertErr !== null) {
+    return { processed: 0, unchanged: 0, error: `players upsert: ${upsertErr.message}` };
+  }
+
+  return { processed: payload.length, unchanged, error: null };
 }
 
 async function finishIntegrationRun(
