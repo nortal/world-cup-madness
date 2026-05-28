@@ -143,6 +143,28 @@
     "errorLocked": "Editing window closed; this prediction is locked.",
     "errorMatchNotFound": "We couldn’t find this match.",
     "errorParticipantNotFound": "Your participant account couldn’t be located. Please sign out and back in.",
-    "errorGeneric": "Could not save your prediction. Please try again."
+    "errorGeneric": "Could not save your prediction. Please try again.",
+    "final": {
+      "pageHeading": "Final predictions",
+      "pageDescription": "Pick the tournament champion, runner-up, top scorer, and best player. You can save partial picks and update them until the first match kicks off.",
+      "championLabel": "Champion team",
+      "runnerUpLabel": "Runner-up team",
+      "topScorerLabel": "Top scorer",
+      "bestPlayerLabel": "Best player",
+      "noPickPlaceholder": "— No pick —",
+      "playerPlaceholder": "Search for a player…",
+      "rostersPendingPlaceholder": "Player rosters not yet announced",
+      "rostersPendingNotice": "Player pickers will activate once FIFA publishes squad lists.",
+      "noMatchingPlayers": "No matching players.",
+      "saveButton": "Save picks",
+      "savingButton": "Saving…",
+      "successToast": "Final predictions saved.",
+      "errorLocked": "The final-predictions window has closed (first match already kicked off).",
+      "errorChampionEqualsRunnerUp": "Champion and runner-up must be different teams.",
+      "errorParticipantNotFound": "Your participant account couldn’t be located. Please sign out and back in.",
+      "errorGeneric": "Could not save your picks. Please try again.",
+      "lockedHeading": "Final predictions locked",
+      "lockedMessage": "The first tournament match has kicked off; final predictions can no longer be edited."
+    }
   }
 }

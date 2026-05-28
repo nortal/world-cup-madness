@@ -143,6 +143,28 @@
     "errorLocked": "Ventana de edición cerrada; este pronóstico está bloqueado.",
     "errorMatchNotFound": "No pudimos encontrar este partido.",
     "errorParticipantNotFound": "No se pudo localizar tu cuenta de participante. Cierra sesión e inicia sesión de nuevo.",
-    "errorGeneric": "No se pudo guardar tu pronóstico. Inténtalo de nuevo."
+    "errorGeneric": "No se pudo guardar tu pronóstico. Inténtalo de nuevo.",
+    "final": {
+      "pageHeading": "Pronósticos finales",
+      "pageDescription": "Elige al campeón del torneo, al subcampeón, al goleador y al mejor jugador. Puedes guardar selecciones parciales y actualizarlas hasta el primer partido.",
+      "championLabel": "Equipo campeón",
+      "runnerUpLabel": "Equipo subcampeón",
+      "topScorerLabel": "Goleador",
+      "bestPlayerLabel": "Mejor jugador",
+      "noPickPlaceholder": "— Sin selección —",
+      "playerPlaceholder": "Busca un jugador…",
+      "rostersPendingPlaceholder": "Listas de jugadores aún no anunciadas",
+      "rostersPendingNotice": "Los selectores de jugador se activarán cuando FIFA publique las listas oficiales.",
+      "noMatchingPlayers": "No hay jugadores que coincidan.",
+      "saveButton": "Guardar",
+      "savingButton": "Guardando…",
+      "successToast": "Pronósticos guardados.",
+      "errorLocked": "La ventana de pronósticos finales se cerró (el primer partido ya comenzó).",
+      "errorChampionEqualsRunnerUp": "El campeón y el subcampeón deben ser equipos diferentes.",
+      "errorParticipantNotFound": "No se pudo localizar tu cuenta de participante. Cierra sesión e inicia sesión de nuevo.",
+      "errorGeneric": "No se pudieron guardar tus selecciones. Inténtalo de nuevo.",
+      "lockedHeading": "Pronósticos finales bloqueados",
+      "lockedMessage": "El primer partido del torneo comenzó; los pronósticos finales ya no se pueden editar."
+    }
   }
 }

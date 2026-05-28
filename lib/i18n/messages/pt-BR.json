@@ -143,6 +143,28 @@
     "errorLocked": "Janela de edição fechada; este palpite está bloqueado.",
     "errorMatchNotFound": "Não conseguimos encontrar esta partida.",
     "errorParticipantNotFound": "Sua conta de participante não pôde ser localizada. Saia e entre novamente.",
-    "errorGeneric": "Não foi possível salvar seu palpite. Tente novamente."
+    "errorGeneric": "Não foi possível salvar seu palpite. Tente novamente.",
+    "final": {
+      "pageHeading": "Palpites finais",
+      "pageDescription": "Escolha o campeão do torneio, o vice-campeão, o artilheiro e o melhor jogador. Você pode salvar palpites parciais e atualizá-los até a primeira partida.",
+      "championLabel": "Time campeão",
+      "runnerUpLabel": "Time vice-campeão",
+      "topScorerLabel": "Artilheiro",
+      "bestPlayerLabel": "Melhor jogador",
+      "noPickPlaceholder": "— Sem escolha —",
+      "playerPlaceholder": "Buscar um jogador…",
+      "rostersPendingPlaceholder": "Listas de jogadores ainda não anunciadas",
+      "rostersPendingNotice": "Os seletores de jogador serão ativados quando a FIFA publicar as listas oficiais.",
+      "noMatchingPlayers": "Nenhum jogador correspondente.",
+      "saveButton": "Salvar",
+      "savingButton": "Salvando…",
+      "successToast": "Palpites finais salvos.",
+      "errorLocked": "A janela de palpites finais foi fechada (a primeira partida já começou).",
+      "errorChampionEqualsRunnerUp": "O campeão e o vice-campeão devem ser times diferentes.",
+      "errorParticipantNotFound": "Sua conta de participante não pôde ser localizada. Saia e entre novamente.",
+      "errorGeneric": "Não foi possível salvar seus palpites. Tente novamente.",
+      "lockedHeading": "Palpites finais bloqueados",
+      "lockedMessage": "A primeira partida do torneio começou; os palpites finais não podem mais ser editados."
+    }
   }
 }
