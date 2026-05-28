@@ -11,7 +11,12 @@
   "dashboard": {
     "greeting": "Olá, {name}",
     "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado.",
-    "adminNavLabel": "Console de administração"
+    "adminNavLabel": "Console de administração",
+    "nav": {
+      "predictionsAria": "Palpites",
+      "finalPredictions": "Palpites finais",
+      "breakdown": "Seu detalhamento"
+    }
   },
   "welcome": {
     "title": "Bem-vindo ao World Cup Madness",
@@ -165,6 +170,18 @@
       "errorGeneric": "Não foi possível salvar seus palpites. Tente novamente.",
       "lockedHeading": "Palpites finais bloqueados",
       "lockedMessage": "A primeira partida do torneio começou; os palpites finais não podem mais ser editados."
-    }
+    },
+    "breakdown": {
+      "pageHeading": "Seu detalhamento de pontos",
+      "pageDescription": "Pontos que você ganhou em cada partida e nos seus palpites finais.",
+      "tableCaption": "Pontos por partida e por palpite final",
+      "colMatch": "Partida",
+      "colResult": "Resultado",
+      "colPoints": "Pontos",
+      "finalPredictionLabel": "Palpite final",
+      "totalLabel": "Total",
+      "emptyState": "Ainda sem pontos. Sua pontuação aparecerá aqui conforme as partidas terminarem."
+    },
+    "vsSeparator": "x"
   }
 }

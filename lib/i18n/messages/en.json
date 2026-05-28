@@ -11,7 +11,12 @@
   "dashboard": {
     "greeting": "Welcome, {name}",
     "emptyState": "No upcoming matches yet. The schedule will appear here once the tournament is finalized.",
-    "adminNavLabel": "Admin console"
+    "adminNavLabel": "Admin console",
+    "nav": {
+      "predictionsAria": "Predictions",
+      "finalPredictions": "Final predictions",
+      "breakdown": "Your breakdown"
+    }
   },
   "welcome": {
     "title": "Welcome to World Cup Madness",
@@ -165,6 +170,18 @@
       "errorGeneric": "Could not save your picks. Please try again.",
       "lockedHeading": "Final predictions locked",
       "lockedMessage": "The first tournament match has kicked off; final predictions can no longer be edited."
-    }
+    },
+    "breakdown": {
+      "pageHeading": "Your score breakdown",
+      "pageDescription": "Points you've earned from each match and your final predictions.",
+      "tableCaption": "Per-match and final-prediction points",
+      "colMatch": "Match",
+      "colResult": "Result",
+      "colPoints": "Points",
+      "finalPredictionLabel": "Final prediction",
+      "totalLabel": "Total",
+      "emptyState": "No points yet. Your score will appear here as matches finish."
+    },
+    "vsSeparator": "vs"
   }
 }

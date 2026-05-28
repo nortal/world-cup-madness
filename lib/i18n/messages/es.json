@@ -11,7 +11,12 @@
   "dashboard": {
     "greeting": "Hola, {name}",
     "emptyState": "Aún no hay partidos próximos. El calendario aparecerá aquí cuando el torneo esté confirmado.",
-    "adminNavLabel": "Consola de administración"
+    "adminNavLabel": "Consola de administración",
+    "nav": {
+      "predictionsAria": "Pronósticos",
+      "finalPredictions": "Pronósticos finales",
+      "breakdown": "Tu desglose"
+    }
   },
   "welcome": {
     "title": "Bienvenido a World Cup Madness",
@@ -165,6 +170,18 @@
       "errorGeneric": "No se pudieron guardar tus selecciones. Inténtalo de nuevo.",
       "lockedHeading": "Pronósticos finales bloqueados",
       "lockedMessage": "El primer partido del torneo comenzó; los pronósticos finales ya no se pueden editar."
-    }
+    },
+    "breakdown": {
+      "pageHeading": "Tu desglose de puntos",
+      "pageDescription": "Puntos que has ganado en cada partido y en tus pronósticos finales.",
+      "tableCaption": "Puntos por partido y por pronóstico final",
+      "colMatch": "Partido",
+      "colResult": "Resultado",
+      "colPoints": "Puntos",
+      "finalPredictionLabel": "Pronóstico final",
+      "totalLabel": "Total",
+      "emptyState": "Aún no tienes puntos. Tu puntuación aparecerá aquí a medida que terminen los partidos."
+    },
+    "vsSeparator": "vs"
   }
 }

@@ -200,25 +200,25 @@ Tests are integrated per phase per the AI-Kit convention (each user story produc
 
 ### Pure helper + Jest
 
-- [ ] T061 [P] [US-PD] Implement `project-repos/world-cup-madness/lib/predictions/scoring-display.ts` — pure helper `formatScoreSource(source: score_event_source, locale: 'en' | 'es' | 'pt-BR'): string` mapping the 13 enum values to translated human labels (e.g. `'match-exact' → 'Exact score'` / `'Marcador exacto'` / `'Placar exato'`); also `sumPoints(events: ScoreEvent[]): number` for the running total
-- [ ] T062 [P] [US-PD] Jest unit test `project-repos/world-cup-madness/lib/predictions/__tests__/scoring-display.test.ts` — every enum value mapped in all 3 locales (no missing keys); `sumPoints` over mixed-source array
+- [x] T061 [P] [US-PD] Implement `project-repos/world-cup-madness/lib/predictions/scoring-display.ts` — pure helper `formatScoreSource(source: score_event_source, locale: 'en' | 'es' | 'pt-BR'): string` mapping the 13 enum values to translated human labels (e.g. `'match-exact' → 'Exact score'` / `'Marcador exacto'` / `'Placar exato'`); also `sumPoints(events: ScoreEvent[]): number` for the running total
+- [x] T062 [P] [US-PD] Jest unit test `project-repos/world-cup-madness/lib/predictions/__tests__/scoring-display.test.ts` — every enum value mapped in all 3 locales (no missing keys); `sumPoints` over mixed-source array
 
 ### Component + page
 
-- [ ] T063 [US-PD] Implement `project-repos/world-cup-madness/components/predictions/BreakdownTable.tsx` — Server Component, props `{ events: ScoreEventWithMatch[], totalPoints: number }`. Renders an accessible `<table>` with semantic headers (Match / Predicted / Official / Points / Source); uses `<output>` for the running total at the bottom; empty-state message when events.length === 0. i18n labels via `useTranslations('predictions.breakdown')`.
-- [ ] T064 [US-PD] Create `project-repos/world-cup-madness/app/(participant)/predictions/breakdown/page.tsx` — Server Component; reads `score_events` filtered by participant_id (RLS applies); joins to matches for predicted vs official scores (predictions also fetched); computes total; renders `<BreakdownTable/>`. `export const revalidate = 60` to mirror feature 002's read-path caching (NFR carry-over).
+- [x] T063 [US-PD] Implement `project-repos/world-cup-madness/components/predictions/BreakdownTable.tsx` — Server Component, props `{ events: ScoreEventWithMatch[], totalPoints: number }`. Renders an accessible `<table>` with semantic headers (Match / Predicted / Official / Points / Source); uses `<output>` for the running total at the bottom; empty-state message when events.length === 0. i18n labels via `useTranslations('predictions.breakdown')`.
+- [x] T064 [US-PD] Create `project-repos/world-cup-madness/app/(participant)/predictions/breakdown/page.tsx` — Server Component; reads `score_events` filtered by participant_id (RLS applies); joins to matches for predicted vs official scores (predictions also fetched); computes total; renders `<BreakdownTable/>`. `export const revalidate = 60` to mirror feature 002's read-path caching (NFR carry-over).
 
 ### Nav links from dashboard
 
-- [ ] T065 [US-PD] Modify `project-repos/world-cup-madness/app/(participant)/dashboard/page.tsx` — add two navigation links: "Final predictions" → `/predictions/final` (gated on `now() < min(kickoff_utc WHERE status != 'cancelled')` — if locked, link to a read-only view or hide); "Your breakdown" → `/predictions/breakdown`. Use the established dashboard widget styling; i18n labels.
+- [x] T065 [US-PD] Modify `project-repos/world-cup-madness/app/(participant)/dashboard/page.tsx` — add two navigation links: "Final predictions" → `/predictions/final` (gated on `now() < min(kickoff_utc WHERE status != 'cancelled')` — if locked, link to a read-only view or hide); "Your breakdown" → `/predictions/breakdown`. Use the established dashboard widget styling; i18n labels.
 
 ### i18n keys
 
-- [ ] T066 [P] [US-PD] Add `predictions.breakdown.*` keys (page heading; column headers; source labels for all 13 enum values; total row; empty state) + `dashboard.nav.finalPredictions` and `dashboard.nav.breakdown` to all three locale files (en/es/pt-BR)
+- [x] T066 [P] [US-PD] Add `predictions.breakdown.*` keys (page heading; column headers; source labels for all 13 enum values; total row; empty state) + `dashboard.nav.finalPredictions` and `dashboard.nav.breakdown` to all three locale files (en/es/pt-BR)
 
 ### Playwright spec
 
-- [ ] T067 [P] [US-PD] Playwright test `project-repos/world-cup-madness/e2e/tests/predictions-breakdown.spec.ts` — seed a participant with predictions across 3 matches (1 exact, 1 outcome, 1 wrong) + complete those matches to trigger scoring; navigate to `/predictions/breakdown`; assert: 3 rows visible; each with correct (predicted, official, points, source label); total = 15; empty-state hidden
+- [x] T067 [P] [US-PD] Playwright test `project-repos/world-cup-madness/e2e/tests/predictions-breakdown.spec.ts` — seed a participant with predictions across 3 matches (1 exact, 1 outcome, 1 wrong) + complete those matches to trigger scoring; navigate to `/predictions/breakdown`; assert: 3 rows visible; each with correct (predicted, official, points, source label); total = 15; empty-state hidden
 
 ---
 
