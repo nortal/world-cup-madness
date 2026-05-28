@@ -236,3 +236,69 @@ Most-hit rows from the [feature-002 quickstart §9](specs/002-match-catalog-read
 - [`specs/002-match-catalog-read/spec.md`](specs/002-match-catalog-read/spec.md) — FRs / NFRs / TCs
 - [`specs/002-match-catalog-read/dod-verification.md`](specs/002-match-catalog-read/dod-verification.md) — audit evidence
 - [`supabase/functions/sync-matches/README.md`](supabase/functions/sync-matches/README.md) — provider sync deep-dive (env vars, action types, concurrency model, deployment)
+
+## Feature 003 — Predictions and scoring
+
+### What shipped
+
+The core predict → score → see-results loop:
+
+- **Match predictions** — submit + edit a predicted score on `/matches/[id]`; server-enforced 60-minute lock (strict-greater-than per BR-LOCK-003).
+- **Final predictions** — champion / runner-up (team pickers) + top-scorer / best-player (player comboboxes) on `/predictions/final`; one row per participant, locked at the first non-cancelled kickoff. Player pickers render disabled with a "rosters pending" notice until squads are synced (FR-P11).
+- **Scoring engine** — Postgres `AFTER INSERT/UPDATE` triggers on `matches` (10/5/0 per match) and on `tournament_config` / `final_predictions` (20 per correct final pick), rebuilding `score_events` via DELETE-then-INSERT. Admin score corrections (`UPDATE matches`) and `set_tournament_winner()` re-fire scoring transactionally.
+- **Squad sync** — the feature-002 `sync-matches` Edge Function gained a step that fetches each team's squad into a new `players` table.
+- **Admin recalc** — `recalculate_all_scores()` RPC (admin-gated, mutex-protected via `scoring_runs`).
+- **Personal breakdown** — `/predictions/breakdown` shows per-match + final-prediction points and a running total.
+
+> **Schema note:** there is no `match_results` table. Feature 002 stores `score_home` / `score_away` / `status` directly on `matches`, so scoring fires on `matches` and admin corrections are `UPDATE matches`. (The spec/contracts say "match_results" — read "matches".)
+
+### New environment variables
+
+None. Squad sync reuses `FOOTBALL_DATA_API_KEY` + `SYNC_FIXTURE_MODE=1` from feature 002. In fixture mode the squad step reads `supabase/functions/sync-matches/__fixtures__/v4-squads-sample.json` (32 teams × 5 players).
+
+### Local test commands
+
+```bash
+# pgTAP — predictions + scoring (RLS, triggers, RPCs, idempotency)
+docker exec -i supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -X -q -f - < test/pgtap/015_match_scoring_trigger.sql
+# (CREATE EXTENSION pgtap; is wiped by `supabase db reset` — re-run it first)
+
+# Trigger scoring locally: finish a match (no match_results table — UPDATE matches)
+#   UPDATE matches SET status='finished', score_home=2, score_away=1 WHERE id='...';
+
+# Playwright — feature 003 surfaces
+npx playwright test \
+  e2e/tests/predictions-submit.spec.ts \
+  e2e/tests/predictions-lock-boundary.spec.ts \
+  e2e/tests/predictions-rls.spec.ts \
+  e2e/tests/predictions-final-submit.spec.ts \
+  e2e/tests/predictions-final-player-picker.spec.ts \
+  e2e/tests/scoring-match-points.spec.ts \
+  e2e/tests/scoring-idempotency.spec.ts \
+  e2e/tests/scoring-admin-correction.spec.ts \
+  e2e/tests/scoring-final-points.spec.ts \
+  e2e/tests/predictions-breakdown.spec.ts
+
+# Jest — pure helpers
+npm test -- --testPathPatterns="lib/predictions"
+```
+
+See [`specs/003-predictions-and-scoring/quickstart.md`](specs/003-predictions-and-scoring/quickstart.md) for the full local-dev walkthrough.
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Scoring trigger doesn't fire on a finished match | The match's `status` isn't `finished`/`cancelled`, or scores are NULL | The trigger WHEN clause needs `status='finished'` + non-null scores (or `status='cancelled'`). Set both in one UPDATE. |
+| `PREDICTION_LOCKED` on a match clearly > 60 min out | Server clock vs your expectation | The RPC uses server `now()`; check `SELECT now()` and the match's `kickoff_utc`. At exactly T-60 the lock IS engaged (BR-LOCK-003). |
+| `UPDATE requires a WHERE clause` (SQLSTATE 21000) inside an RPC | Supabase's safe-update guard (supautils) blocks unqualified UPDATE/DELETE | Add a WHERE clause — e.g. `set_tournament_winner` updates `tournament_config WHERE id = 1`. |
+| `recalculate_all_scores()` returns `outcome: 'skipped'` | A prior recalc row is stuck in-flight | `DELETE FROM scoring_runs WHERE action='admin-recalc-all' AND finished_at IS NULL;` (runbook step). |
+| Player pickers stay disabled | `players` table empty (squads not synced) | Run the `sync-matches` Edge Function in fixture mode, or seed players directly; the picker auto-enables when `players` has ≥1 row. |
+| pgTAP "Looks like you planned N but ran M" | `ROLLBACK TO SAVEPOINT` reverts pgTAP's test counter | Use `RELEASE SAVEPOINT` instead (throws_ok self-manages its own exception savepoint). |
+
+### Cross-references
+
+- [`specs/003-predictions-and-scoring/spec.md`](specs/003-predictions-and-scoring/spec.md) — FRs / NFRs / TCs
+- [`specs/003-predictions-and-scoring/dod-verification.md`](specs/003-predictions-and-scoring/dod-verification.md) — audit evidence (per-FR/NFR/TC table + the match_results→matches schema note)
+- [`specs/003-predictions-and-scoring/contracts/`](specs/003-predictions-and-scoring/contracts/) — RPC + trigger contracts

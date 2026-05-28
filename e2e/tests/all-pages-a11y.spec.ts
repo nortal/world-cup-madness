@@ -614,4 +614,88 @@ test.describe('all pages — WCAG 2.1 AA axe-core sweep', () => {
       .analyze();
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });
+
+  /**
+   * Feature 003 US-PB — `/predictions/final` with the top-scorer player
+   * combobox OPEN. Mirrors the TimezonePicker open-state audit above: the
+   * WAI-ARIA combobox carries its a11y surface (listbox + options +
+   * aria-activedescendant) in the expanded state. We seed a couple of players
+   * so the picker renders as the interactive combobox (not the disabled
+   * placeholder), open it, and scan. The two team <select>s + the form are
+   * scanned at the same time.
+   */
+  test('/predictions/final (player combobox open) has no a11y violations', async ({ page }) => {
+    const serviceRole = getServiceRoleClient();
+    const [eng] = await pickFiveTeamUuids(serviceRole);
+
+    // Seed a future match so the final-predictions window is OPEN (not locked).
+    const kickoff = new Date();
+    kickoff.setUTCDate(kickoff.getUTCDate() + 5);
+    await seedA11yMatches(serviceRole, [
+      { providerId: 8207, homeTeamId: eng, awayTeamId: eng, stage: 'group', groupLabel: null, kickoffUtc: kickoff.toISOString(), status: 'scheduled' },
+    ]);
+    // Seed players so the picker is interactive (FR-P11 active state).
+    await serviceRole.from('players').delete().in('provider_player_id', [8801, 8802]);
+    await serviceRole.from('players').insert([
+      { provider_player_id: 8801, name: 'A11y Striker', position: 'Attacker', team_id: eng },
+      { provider_player_id: 8802, name: 'A11y Keeper', position: 'Goalkeeper', team_id: eng },
+    ]);
+
+    await signInProvisionAndPinTz(page);
+    await page.goto('/predictions/final');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+    // Open the top-scorer combobox (data-testid from PlayerPickerCombobox).
+    const combo = page.getByTestId('player-combobox-top_scorer');
+    await expect(combo).toBeVisible();
+    await combo.click();
+    await combo.fill('A11y');
+    // Scope the option lookup to the combobox's own listbox — the team
+    // <select> elements also expose native <option>s (role=option) which would
+    // otherwise match (and resolve to a hidden select option).
+    const listbox = page.getByRole('listbox').first();
+    await expect(listbox).toBeVisible();
+    await expect(listbox.getByRole('option').first()).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+
+    // Cleanup the seeded players (matches cleaned by seedA11yMatches range reuse).
+    await serviceRole.from('players').delete().in('provider_player_id', [8801, 8802]);
+  });
+
+  /**
+   * Feature 003 US-PD — `/predictions/breakdown` with seeded score events.
+   * Scans the breakdown <table> (caption, scope headers, <output> total).
+   */
+  test('/predictions/breakdown (with score events) has no a11y violations', async ({ page }) => {
+    const serviceRole = getServiceRoleClient();
+    const [eng, fra] = await pickFiveTeamUuids(serviceRole);
+
+    const kickoff = new Date();
+    kickoff.setUTCDate(kickoff.getUTCDate() + 5);
+    const [seeded] = await seedA11yMatches(serviceRole, [
+      { providerId: 8208, homeTeamId: eng, awayTeamId: fra, stage: 'group', groupLabel: 'A', kickoffUtc: kickoff.toISOString(), status: 'scheduled' },
+    ]);
+
+    const oid = await signInProvisionAndPinTz(page);
+    const { data: participant } = await serviceRole.from('participants').select('id').eq('oid', oid).maybeSingle();
+
+    // Predict + finish so a score_events row exists for the breakdown table.
+    await serviceRole.from('predictions').insert({
+      participant_id: participant!.id, match_id: seeded!.id, predicted_home_score: 2, predicted_away_score: 1,
+    });
+    await serviceRole.from('matches').update({ status: 'finished', score_home: 2, score_away: 1 }).eq('id', seeded!.id);
+
+    await page.goto('/predictions/breakdown');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('table')).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
 });

@@ -138,7 +138,7 @@ export default function PlayerPickerCombobox({
                   onMouseEnter={() => setHighlightedIndex(idx)}
                 >
                   <span className="font-medium">{player.name}</span>
-                  <span className="ml-2 text-xs text-gray-500">
+                  <span className="ml-2 text-xs text-gray-600">
                     {player.teamTla}{player.position ? ` · ${player.position}` : ''}
                   </span>
                 </li>
