@@ -305,16 +305,18 @@ BEGIN
     END IF;
 
     -- Dispatch the UPDATE. The trigger's WHEN (IS DISTINCT FROM) clause
-    -- decides whether scoring actually re-fires.
+    -- decides whether scoring actually re-fires. `WHERE id = 1` targets the
+    -- singleton config row AND satisfies Supabase's safe-update guard
+    -- (supautils blocks unqualified UPDATE/DELETE with SQLSTATE 21000).
     CASE p_item
         WHEN 'champion' THEN
-            UPDATE tournament_config SET champion_team_id = p_id;
+            UPDATE tournament_config SET champion_team_id = p_id WHERE id = 1;
         WHEN 'runner-up' THEN
-            UPDATE tournament_config SET runner_up_team_id = p_id;
+            UPDATE tournament_config SET runner_up_team_id = p_id WHERE id = 1;
         WHEN 'top-scorer' THEN
-            UPDATE tournament_config SET top_scorer_player_id = p_id;
+            UPDATE tournament_config SET top_scorer_player_id = p_id WHERE id = 1;
         WHEN 'best-player' THEN
-            UPDATE tournament_config SET best_player_player_id = p_id;
+            UPDATE tournament_config SET best_player_player_id = p_id WHERE id = 1;
     END CASE;
     GET DIAGNOSTICS v_changed = ROW_COUNT;
 
