@@ -693,6 +693,14 @@ export type Database = {
       _table_privs: { Args: never; Returns: unknown[] }
       _temptypes: { Args: { "": string }; Returns: string }
       _todo: { Args: never; Returns: string }
+      calculate_final_points: {
+        Args: { p_participant_id?: string }
+        Returns: undefined
+      }
+      calculate_match_points: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
       col_is_null:
         | {
             Args: {
@@ -770,6 +778,7 @@ export type Database = {
       pg_version_num: { Args: never; Returns: number }
       pgtap_version: { Args: never; Returns: number }
       provision_participant_from_jwt: { Args: never; Returns: Json }
+      recalculate_all_scores: { Args: never; Returns: Json }
       record_auth_failure: {
         Args: {
           p_action: string
@@ -784,6 +793,10 @@ export type Database = {
         | { Args: never; Returns: string[] }
         | { Args: { "": string }; Returns: string[] }
       set_timezone: { Args: { p_timezone: string }; Returns: Json }
+      set_tournament_winner: {
+        Args: { p_id: string; p_item: string }
+        Returns: Json
+      }
       skip:
         | { Args: { "": string }; Returns: string }
         | { Args: { how_many: number; why: string }; Returns: string }

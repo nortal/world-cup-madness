@@ -276,3 +276,157 @@ GRANT EXECUTE ON FUNCTION submit_final_prediction(UUID, UUID, UUID, UUID) TO aut
 
 COMMENT ON FUNCTION submit_final_prediction(UUID, UUID, UUID, UUID) IS
     'feature 003 US-PB: insert or update a participant''s tournament-wide predictions (champion/runner-up/top-scorer/best-player). All 4 nullable for partial submits. Lock: BEFORE first non-cancelled kickoff (BR-LOCK-005).';
+
+-- ============================================================================
+-- set_tournament_winner — feature 003 US-PC (T052)
+-- ============================================================================
+-- Per contracts/rpc-set-tournament-winner.md. Admin-only. Updates one of the
+-- four winner columns on tournament_config; the AFTER UPDATE trigger
+-- (migration 0031) re-fires calculate_final_points(NULL) → full sweep.
+CREATE OR REPLACE FUNCTION set_tournament_winner(p_item TEXT, p_id UUID)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+    v_changed BOOLEAN;
+BEGIN
+    IF NOT is_admin_user() THEN
+        RAISE EXCEPTION 'FORBIDDEN'
+            USING ERRCODE = 'insufficient_privilege',
+                  HINT = 'set_tournament_winner requires an admin participant.';
+    END IF;
+
+    IF p_item NOT IN ('champion', 'runner-up', 'top-scorer', 'best-player') THEN
+        RAISE EXCEPTION 'INVALID_WINNER_ITEM'
+            USING ERRCODE = 'invalid_parameter_value',
+                  HINT = 'p_item must be champion | runner-up | top-scorer | best-player.';
+    END IF;
+
+    -- Dispatch the UPDATE. The trigger's WHEN (IS DISTINCT FROM) clause
+    -- decides whether scoring actually re-fires.
+    CASE p_item
+        WHEN 'champion' THEN
+            UPDATE tournament_config SET champion_team_id = p_id;
+        WHEN 'runner-up' THEN
+            UPDATE tournament_config SET runner_up_team_id = p_id;
+        WHEN 'top-scorer' THEN
+            UPDATE tournament_config SET top_scorer_player_id = p_id;
+        WHEN 'best-player' THEN
+            UPDATE tournament_config SET best_player_player_id = p_id;
+    END CASE;
+    GET DIAGNOSTICS v_changed = ROW_COUNT;
+
+    INSERT INTO audit_log (action, actor_oid, entity_type, entity_id, new_value)
+        VALUES (
+            'admin.tournament-winner-set',
+            (SELECT oid FROM participants WHERE auth_user_id = auth.uid()),
+            'tournament_config',
+            p_id,
+            jsonb_build_object('item', p_item, 'id', p_id)
+        );
+
+    RETURN jsonb_build_object(
+        'outcome', 'success',
+        'item', p_item,
+        'id', p_id,
+        'scoring_triggered', v_changed
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION set_tournament_winner(TEXT, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION set_tournament_winner(TEXT, UUID) TO authenticated;
+
+COMMENT ON FUNCTION set_tournament_winner(TEXT, UUID) IS
+    'feature 003 US-PC: admin sets one tournament_config winner column; trigger re-fires calculate_final_points(NULL). Admin-gated via is_admin_user().';
+
+-- ============================================================================
+-- recalculate_all_scores — feature 003 US-PC (T052)
+-- ============================================================================
+-- Per contracts/rpc-recalculate-all-scores.md. Admin-only. Mutex via
+-- scoring_runs partial unique index (at most one in-flight admin-recalc-all).
+-- Per-match loop calls calculate_match_points() for every finished/cancelled
+-- match. SCHEMA NOTE: iterates `matches` (feature 002 stores results there;
+-- no match_results table exists).
+CREATE OR REPLACE FUNCTION recalculate_all_scores()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+    v_run_id           UUID;
+    v_match            RECORD;
+    v_matches_processed INTEGER := 0;
+    v_active_count     INTEGER;
+    v_started_at       TIMESTAMPTZ := now();
+    v_in_flight_started TIMESTAMPTZ;
+BEGIN
+    IF NOT is_admin_user() THEN
+        RAISE EXCEPTION 'FORBIDDEN'
+            USING ERRCODE = 'insufficient_privilege',
+                  HINT = 'recalculate_all_scores requires an admin participant.';
+    END IF;
+
+    -- Claim the mutex by inserting an in-flight scoring_runs row. The partial
+    -- unique index scoring_runs_at_most_one_in_flight_per_action rejects with
+    -- 23505 if another admin-recalc-all is in flight.
+    BEGIN
+        INSERT INTO scoring_runs (action, started_at, status)
+            VALUES ('admin-recalc-all', v_started_at, 'success')
+            RETURNING id INTO v_run_id;
+    EXCEPTION WHEN unique_violation THEN
+        SELECT started_at INTO v_in_flight_started
+            FROM scoring_runs
+            WHERE action = 'admin-recalc-all' AND finished_at IS NULL
+            ORDER BY started_at DESC LIMIT 1;
+        RETURN jsonb_build_object(
+            'outcome', 'skipped',
+            'in_flight_started_at', v_in_flight_started
+        );
+    END;
+
+    INSERT INTO audit_log (action, actor_oid, entity_type, entity_id, new_value)
+        VALUES (
+            'admin.recalc-all',
+            (SELECT oid FROM participants WHERE auth_user_id = auth.uid()),
+            'scoring_runs',
+            v_run_id,
+            jsonb_build_object('started_at', v_started_at)
+        );
+
+    -- Per-match loop. Each calculate_match_points() is its own DELETE+INSERT;
+    -- they share this RPC's transaction (a single big transaction is fine for
+    -- the recalc-all admin action — it's infrequent and the mutex serialises it).
+    FOR v_match IN
+        SELECT id FROM matches
+        WHERE status IN ('finished', 'cancelled')
+        ORDER BY kickoff_utc NULLS LAST
+    LOOP
+        PERFORM calculate_match_points(v_match.id);
+        v_matches_processed := v_matches_processed + 1;
+    END LOOP;
+
+    SELECT count(*) INTO v_active_count FROM participants WHERE status = 'active';
+
+    UPDATE scoring_runs
+        SET finished_at = now(),
+            affected_participants_count = v_matches_processed * v_active_count
+        WHERE id = v_run_id;
+
+    RETURN jsonb_build_object(
+        'outcome', 'success',
+        'scoring_run_id', v_run_id,
+        'matches_processed', v_matches_processed,
+        'duration_ms', (EXTRACT(EPOCH FROM (now() - v_started_at)) * 1000)::int
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION recalculate_all_scores() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION recalculate_all_scores() TO authenticated;
+
+COMMENT ON FUNCTION recalculate_all_scores() IS
+    'feature 003 US-PC: admin full recalc across all finished/cancelled matches. Mutex via scoring_runs partial unique index. Admin-gated.';
