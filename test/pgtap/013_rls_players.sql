@@ -251,7 +251,7 @@ SELECT throws_ok(
     NULL,
     'eligible authenticated user CANNOT INSERT into players (no INSERT policy)'
 );
-ROLLBACK TO SAVEPOINT before_insert;
+RELEASE SAVEPOINT before_insert;
 
 -- ===========================================================================
 -- 11. ELIGIBLE participant E cannot UPDATE (no UPDATE policy)
@@ -270,7 +270,7 @@ SELECT is(
     0,
     'eligible authenticated user UPDATE on players affects 0 rows (no UPDATE policy → row invisible to UPDATE)'
 );
-ROLLBACK TO SAVEPOINT before_update;
+RELEASE SAVEPOINT before_update;
 
 -- ===========================================================================
 -- 12. ELIGIBLE participant E cannot DELETE (no DELETE policy)
@@ -285,7 +285,7 @@ SELECT is(
     0,
     'eligible authenticated user DELETE on players affects 0 rows (no DELETE policy → row invisible to DELETE)'
 );
-ROLLBACK TO SAVEPOINT before_delete;
+RELEASE SAVEPOINT before_delete;
 
 -- ===========================================================================
 -- 13. CONSTRAINT: players_position_valid rejects 'Striker'
@@ -310,7 +310,7 @@ SELECT throws_ok(
     NULL,
     'players_position_valid CHECK rejects position=''Striker'' (only Goalkeeper/Defender/Midfielder/Attacker allowed)'
 );
-ROLLBACK TO SAVEPOINT before_bad_position;
+RELEASE SAVEPOINT before_bad_position;
 
 SELECT * FROM finish();
 

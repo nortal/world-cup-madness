@@ -35,7 +35,7 @@
 
 BEGIN;
 
-SELECT plan(13);
+SELECT plan(12);
 
 -- ---------------------------------------------------------------------------
 -- Fixed UUIDs for deterministic assertions

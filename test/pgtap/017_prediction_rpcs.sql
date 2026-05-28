@@ -37,7 +37,7 @@
 
 BEGIN;
 
-SELECT plan(23);
+SELECT plan(31);
 
 -- ---------------------------------------------------------------------------
 -- Fixed UUIDs for deterministic assertions
@@ -535,11 +535,102 @@ RESET ROLE;
 ROLLBACK TO SAVEPOINT sp_lock_test;
 
 -- ===========================================================================
--- set_tournament_winner() + recalculate_all_scores() — T055 will add tests here
+-- set_tournament_winner() + recalculate_all_scores() — T055 (US-PC)
 -- ===========================================================================
--- Future contributor: add admin-only RPC tests (gating on is_admin_user(),
--- scoring_runs row emission, audit tags 'admin.tournament-winner-set' and
--- 'admin.recalc-all') below this divider. Bump plan(N) accordingly.
+-- Coverage (TEST 20-26):
+--   20 — set_tournament_winner: non-admin caller → FORBIDDEN (42501)
+--   21 — set_tournament_winner: admin + invalid item → INVALID_WINNER_ITEM (22023)
+--   22 — set_tournament_winner: admin + valid champion → outcome=success
+--   23 — set_tournament_winner: scoring_triggered=true on a real change
+--   24 — recalculate_all_scores: non-admin → FORBIDDEN
+--   25 — recalculate_all_scores: admin → outcome=success + scoring_runs row written
+--   26 — recalculate_all_scores: mutex — pre-existing in-flight row → outcome=skipped
+
+RESET ROLE;
+
+-- Seed an admin participant (oid already in tournament_config.admin_oids).
+\set admin_user_id '81111111-1111-1111-1111-111111111111'
+INSERT INTO auth.users (id) VALUES (:'admin_user_id') ON CONFLICT (id) DO NOTHING;
+INSERT INTO participants (auth_user_id, oid, email, display_name, role, status)
+VALUES (:'admin_user_id'::uuid, :'admin_oid'::uuid, 'admin@nortal.com', 'Admin', 'admin', 'active')
+ON CONFLICT (oid) DO NOTHING;
+
+-- TEST 20 — non-admin (User A) → FORBIDDEN
+SELECT test_set_jwt(:'a_user_id'::uuid, :'nortal_tid'::uuid, :'a_oid'::uuid, 'a@nortal.com');
+SET LOCAL ROLE authenticated;
+SELECT throws_ok(
+    format('SELECT set_tournament_winner(%L, %L::uuid)', 'champion', gen_random_uuid()),
+    '42501',
+    NULL,
+    'TEST 20: set_tournament_winner by non-admin raises insufficient_privilege (FORBIDDEN)'
+);
+RESET ROLE;
+
+-- TEST 21 — admin + invalid item → INVALID_WINNER_ITEM
+SELECT test_set_jwt(:'admin_user_id'::uuid, :'nortal_tid'::uuid, :'admin_oid'::uuid, 'admin@nortal.com');
+SET LOCAL ROLE authenticated;
+SELECT throws_ok(
+    format('SELECT set_tournament_winner(%L, %L::uuid)', 'mvp', gen_random_uuid()),
+    '22023',  -- invalid_parameter_value
+    NULL,
+    'TEST 21: set_tournament_winner with invalid item raises invalid_parameter_value (INVALID_WINNER_ITEM)'
+);
+
+-- TEST 22 — admin + valid champion → outcome=success
+SELECT is(
+    (SELECT set_tournament_winner('champion', (SELECT id FROM teams WHERE tla='ENG')) ->> 'outcome'),
+    'success',
+    'TEST 22: set_tournament_winner(champion, ENG) by admin returns outcome=success'
+);
+
+-- TEST 23 — scoring_triggered true on a real change (runner-up was unset → now set)
+SELECT is(
+    (SELECT set_tournament_winner('runner-up', (SELECT id FROM teams WHERE tla='FRA')) ->> 'scoring_triggered'),
+    'true',
+    'TEST 23: set_tournament_winner reports scoring_triggered=true when the column actually changes'
+);
+RESET ROLE;
+
+-- TEST 24 — recalculate_all_scores by non-admin → FORBIDDEN
+SELECT test_set_jwt(:'a_user_id'::uuid, :'nortal_tid'::uuid, :'a_oid'::uuid, 'a@nortal.com');
+SET LOCAL ROLE authenticated;
+SELECT throws_ok(
+    'SELECT recalculate_all_scores()',
+    '42501',
+    NULL,
+    'TEST 24: recalculate_all_scores by non-admin raises insufficient_privilege (FORBIDDEN)'
+);
+RESET ROLE;
+
+-- TEST 25 — recalculate_all_scores by admin → success + scoring_runs row
+SELECT test_set_jwt(:'admin_user_id'::uuid, :'nortal_tid'::uuid, :'admin_oid'::uuid, 'admin@nortal.com');
+SET LOCAL ROLE authenticated;
+SELECT is(
+    (SELECT recalculate_all_scores() ->> 'outcome'),
+    'success',
+    'TEST 25: recalculate_all_scores by admin returns outcome=success'
+);
+RESET ROLE;
+SELECT cmp_ok(
+    (SELECT count(*)::int FROM scoring_runs WHERE action='admin-recalc-all' AND status='success' AND finished_at IS NOT NULL),
+    '>=', 1,
+    'TEST 25b: recalculate_all_scores wrote a completed scoring_runs row'
+);
+
+-- TEST 26 — mutex: pre-insert an in-flight row, then admin recalc → skipped.
+-- NOTE: no SAVEPOINT/ROLLBACK here. The outer BEGIN/ROLLBACK cleans up the
+-- in-flight row at file end. (A ROLLBACK TO SAVEPOINT would revert pgTAP's
+-- transactional test counter and desync the planned-vs-ran tally even though
+-- the `ok N` line was already printed.)
+INSERT INTO scoring_runs (action, started_at, status) VALUES ('admin-recalc-all', now(), 'success');
+SELECT test_set_jwt(:'admin_user_id'::uuid, :'nortal_tid'::uuid, :'admin_oid'::uuid, 'admin@nortal.com');
+SET LOCAL ROLE authenticated;
+SELECT is(
+    (SELECT recalculate_all_scores() ->> 'outcome'),
+    'skipped',
+    'TEST 26: recalculate_all_scores returns outcome=skipped when another run is in-flight (mutex via partial unique index)'
+);
+RESET ROLE;
 
 SELECT * FROM finish();
 

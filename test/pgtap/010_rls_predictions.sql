@@ -266,7 +266,7 @@ SELECT is(
 );
 
 RESET ROLE;
-ROLLBACK TO SAVEPOINT sp_test6;
+RELEASE SAVEPOINT sp_test6;
 
 -- ---------------------------------------------------------------------------
 -- TEST 7 — Cross-participant invisibility:
@@ -296,7 +296,7 @@ SELECT is(
 );
 
 RESET ROLE;
-ROLLBACK TO SAVEPOINT sp_test7;
+RELEASE SAVEPOINT sp_test7;
 
 -- ---------------------------------------------------------------------------
 -- TEST 8 — Cross-participant INSERT must FAIL:
@@ -334,7 +334,7 @@ SELECT throws_ok(
 );
 
 RESET ROLE;
-ROLLBACK TO SAVEPOINT sp_test8;
+RELEASE SAVEPOINT sp_test8;
 
 -- ---------------------------------------------------------------------------
 -- TEST 9 — Participant A UPDATE of their own row succeeds.
@@ -353,7 +353,7 @@ SELECT is(
 );
 
 RESET ROLE;
-ROLLBACK TO SAVEPOINT sp_test9;
+RELEASE SAVEPOINT sp_test9;
 
 -- ---------------------------------------------------------------------------
 -- TEST 10 — Admin SELECTs and sees BOTH participants' rows (2 rows).
@@ -370,7 +370,7 @@ SELECT is(
 );
 
 RESET ROLE;
-ROLLBACK TO SAVEPOINT sp_test10;
+RELEASE SAVEPOINT sp_test10;
 
 -- ---------------------------------------------------------------------------
 -- TEST 11 — Anon role sees 0 rows (no policy grants anon any SELECT).
@@ -396,7 +396,7 @@ SELECT is(
 );
 
 RESET ROLE;
-ROLLBACK TO SAVEPOINT sp_test11;
+RELEASE SAVEPOINT sp_test11;
 
 SELECT * FROM finish();
 
