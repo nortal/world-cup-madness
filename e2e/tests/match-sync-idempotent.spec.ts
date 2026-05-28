@@ -72,6 +72,9 @@ interface SyncSuccessResponse {
   integration_run_id: number;
   records_processed?: number;
   records_unchanged?: number;
+  // Feature 003: squad-sync extension broke out match vs player counts.
+  matches_processed?: number;
+  players_processed?: number;
   duration_ms?: number;
   error_category?: string;
   error_message?: string;
@@ -157,6 +160,13 @@ async function clearSyncTables(): Promise<void> {
   if (matchesDelete.error) {
     throw new Error(`clearSyncTables: matches: ${matchesDelete.error.message}`);
   }
+  // Feature 003 added players (also written by the squad-sync step of the
+  // bootstrap). Clear them too so the cold-start `records_unchanged === 0`
+  // assertion holds — otherwise persisted players count as unchanged.
+  const playersDelete = await client.from('players').delete().neq('id', ZERO_UUID);
+  if (playersDelete.error) {
+    throw new Error(`clearSyncTables: players: ${playersDelete.error.message}`);
+  }
 }
 
 test.describe('US-MC / TC-M13 — idempotent match sync', () => {
@@ -183,7 +193,12 @@ test.describe('US-MC / TC-M13 — idempotent match sync', () => {
     // empty, so every row is a fresh INSERT — none counted as unchanged.
     const firstRun = await invokeBootstrapSync();
     expect(firstRun.outcome).toBe('success');
-    expect(firstRun.records_processed).toBe(FIXTURE_MATCH_COUNT);
+    // Feature 003 extended the Edge Function with squad sync, so
+    // records_processed is now the COMBINED matches + players total. The
+    // match-specific count lives in matches_processed (FR-P21). Assert on
+    // that for the catalog-count invariant; records_unchanged=0 on a cold
+    // start still holds for the combined total.
+    expect(firstRun.matches_processed).toBe(FIXTURE_MATCH_COUNT);
     expect(firstRun.records_unchanged).toBe(0);
 
     // Verify the catalog landed: exactly 15 rows, capture their primary
@@ -207,10 +222,11 @@ test.describe('US-MC / TC-M13 — idempotent match sync', () => {
     // (15) and records_unchanged catches up to match it.
     const secondRun = await invokeBootstrapSync();
     expect(secondRun.outcome).toBe('success');
-    expect(secondRun.records_processed).toBe(FIXTURE_MATCH_COUNT);
-    expect(secondRun.records_unchanged).toBe(FIXTURE_MATCH_COUNT);
-    // The "TC-M13 verbatim" assertion — second run must report
-    // records_processed == records_unchanged.
+    // matches_processed stays at the full match count across runs.
+    expect(secondRun.matches_processed).toBe(FIXTURE_MATCH_COUNT);
+    // The "TC-M13 verbatim" idempotency assertion — second run must report
+    // records_processed == records_unchanged (now the COMBINED matches +
+    // players total; everything matched the stored values so both equal).
     expect(secondRun.records_processed).toBe(secondRun.records_unchanged);
 
     // ── Catalog must not have grown: still exactly 15 rows.

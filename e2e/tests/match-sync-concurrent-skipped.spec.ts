@@ -105,6 +105,8 @@ type SyncResponse =
       integration_run_id: number;
       records_processed: number;
       records_unchanged: number;
+      matches_processed?: number;
+      players_processed?: number;
       duration_ms: number;
     }
   | {
@@ -162,6 +164,14 @@ async function resetSyncTables(): Promise<void> {
   if (matchesDelete.error) {
     throw new Error(
       `resetSyncTables: matches delete failed: ${matchesDelete.error.message}`,
+    );
+  }
+  // Feature 003 added players (written by the squad-sync step of the
+  // bootstrap). Clear them so a cold sync starts from an empty catalog.
+  const playersDelete = await client.from('players').delete().neq('id', ZERO_UUID);
+  if (playersDelete.error) {
+    throw new Error(
+      `resetSyncTables: players delete failed: ${playersDelete.error.message}`,
     );
   }
 }
@@ -278,7 +288,9 @@ test.describe('US-MC / TC-M14 — concurrent sync skipped via advisory lock', ()
     }
 
     // ----- Assert: success-response shape ------------------------------
-    expect(successResponse.records_processed).toBe(EXPECTED_FIXTURE_MATCH_COUNT);
+    // Feature 003 squad-sync made records_processed the combined matches +
+    // players total; the match count lives in matches_processed (FR-P21).
+    expect(successResponse.matches_processed).toBe(EXPECTED_FIXTURE_MATCH_COUNT);
     expect(successResponse.integration_run_id).toBeGreaterThan(0);
     expect(typeof successResponse.duration_ms).toBe('number');
 
@@ -328,7 +340,10 @@ test.describe('US-MC / TC-M14 — concurrent sync skipped via advisory lock', ()
     ).toBeDefined();
 
     expect(successRow!.provider).toBe('football-data.org');
-    expect(successRow!.records_processed).toBe(EXPECTED_FIXTURE_MATCH_COUNT);
+    // integration_runs.records_processed is the COMBINED matches + players
+    // total (feature 003 squad-sync, FR-P21) — at least the 15 fixture
+    // matches. We don't hardcode the player count to avoid fixture coupling.
+    expect(successRow!.records_processed).toBeGreaterThanOrEqual(EXPECTED_FIXTURE_MATCH_COUNT);
     expect(successRow!.finished_at).not.toBeNull();
 
     expect(skippedRow!.provider).toBe('football-data.org');
