@@ -1,0 +1,187 @@
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Pronostica cada partido de la Copa Mundial FIFA 2026 y compite con tus colegas."
+  },
+  "signIn": {
+    "label": "Iniciar sesión con Microsoft",
+    "loading": "Iniciando sesión…",
+    "error": "No se pudo iniciar el inicio de sesión. Por favor, inténtalo de nuevo."
+  },
+  "dashboard": {
+    "greeting": "Hola, {name}",
+    "emptyState": "Aún no hay partidos próximos. El calendario aparecerá aquí cuando el torneo esté confirmado.",
+    "adminNavLabel": "Consola de administración",
+    "nav": {
+      "predictionsAria": "Pronósticos",
+      "finalPredictions": "Pronósticos finales",
+      "breakdown": "Tu desglose"
+    }
+  },
+  "welcome": {
+    "title": "Bienvenido a World Cup Madness",
+    "intro": "Así funciona el torneo.",
+    "scoringExact": "Marcador exacto: 10 puntos por partido",
+    "scoringOutcome": "Solo resultado correcto (victoria, derrota o empate): 5 puntos",
+    "scoringWrong": "Resultado incorrecto: 0 puntos",
+    "scoringFinal": "Pronósticos finales (campeón, subcampeón, goleador, mejor jugador): 20 puntos cada uno",
+    "lockWindow": "Los pronósticos de partidos se bloquean 60 minutos antes del inicio.",
+    "deadline": "Los pronósticos finales se bloquean al inicio del primer partido del torneo.",
+    "gotIt": "Entendido"
+  },
+  "matches": {
+    "pageHeading": "Partidos",
+    "pageDescription": "Todos los partidos de la Copa Mundial FIFA 2026.",
+    "emptyCatalog": "El calendario de partidos aún no se ha cargado. Un administrador lo publicará en breve.",
+    "viewAllMatches": "Ver todos los partidos",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "yesterday": "Ayer",
+    "vs": "vs",
+    "stages": {
+      "group": "Fase de grupos",
+      "round-of-16": "Octavos de final",
+      "quarter-final": "Cuartos de final",
+      "semi-final": "Semifinales",
+      "third-place": "Tercer puesto",
+      "final": "Final"
+    },
+    "groupLabel": "Grupo {letter}",
+    "badge": {
+      "upcoming": "PRÓXIMO",
+      "locked": "BLOQUEADO",
+      "finished": "FINALIZADO"
+    },
+    "countdown": {
+      "locksIn": "Se bloquea en {time}",
+      "hoursMinutes": "{hours} h {minutes} min",
+      "minutesOnly": "{minutes} min",
+      "minutesSeconds": "{minutes} min {seconds} s",
+      "lockingNow": "Bloqueando ahora"
+    },
+    "filters": {
+      "allStages": "Todas las fases",
+      "allGroups": "Todos los grupos",
+      "allTeams": "Todos los equipos",
+      "apply": "Aplicar filtros",
+      "clearFilters": "Quitar filtros"
+    },
+    "detail": {
+      "backToList": "Volver a partidos",
+      "kickoff": "Inicio",
+      "venue": "Sede",
+      "finalScore": "Marcador final",
+      "status": "Estado"
+    },
+    "dashboardWidget": {
+      "heading": "Próximos partidos",
+      "emptyState": "Todavía no hay próximos partidos programados."
+    }
+  },
+  "profile": {
+    "heading": "Tu perfil",
+    "emailLabel": "Correo electrónico",
+    "displayNameLabel": "Nombre para mostrar",
+    "saveButton": "Guardar",
+    "savingButton": "Guardando…",
+    "successToast": "Nombre para mostrar actualizado.",
+    "errorEmpty": "El nombre para mostrar no puede estar vacío.",
+    "errorTooLong": "El nombre para mostrar debe tener 100 caracteres o menos.",
+    "errorNotFound": "No se pudo encontrar tu cuenta de participante. Por favor, cierra sesión y vuelve a iniciar.",
+    "errorGeneric": "No se pudo actualizar el nombre para mostrar. Por favor, inténtalo de nuevo.",
+    "timezoneLabel": "Zona horaria",
+    "timezoneHelper": "Los horarios de inicio de los partidos se muestran en esta zona horaria.",
+    "timezonePlaceholder": "Buscar zonas horarias…",
+    "timezoneSaveButton": "Guardar zona horaria",
+    "timezoneSavingButton": "Guardando…",
+    "timezoneSuccessToast": "Zona horaria actualizada.",
+    "timezoneErrorEmpty": "La zona horaria es obligatoria.",
+    "timezoneErrorTooLong": "La zona horaria debe tener 64 caracteres o menos.",
+    "timezoneErrorNotFound": "No se encontró tu cuenta de participante. Por favor, cierra sesión y vuelve a entrar.",
+    "timezoneErrorGeneric": "No se pudo actualizar la zona horaria. Inténtalo de nuevo."
+  },
+  "accessDenied": {
+    "heading": "Este torneo es para colaboradores de Nortal",
+    "body": "El inicio de sesión fue rechazado porque tu cuenta de Microsoft no pertenece al tenant de Nortal en Entra.",
+    "retryLabel": "Iniciar sesión con otra cuenta",
+    "contact": "Si crees que esto es un error, por favor contacta al administrador del torneo."
+  },
+  "authError": {
+    "heading": "El inicio de sesión no se completó",
+    "body": "Algo interrumpió el inicio de sesión. Esto suele ser temporal — por favor, inténtalo de nuevo.",
+    "retryLabel": "Reintentar inicio de sesión",
+    "contact": "Si el problema persiste, por favor contacta al administrador del torneo.",
+    "statusLinkLabel": "Ver estado del servicio"
+  },
+  "privacy": {
+    "linkLabel": "Aviso de privacidad",
+    "heading": "Aviso de privacidad",
+    "intro": "World Cup Madness es un torneo interno de pronósticos de Nortal. Esto es lo que recopilamos, por qué y quién puede verlo.",
+    "dataCollectedHeading": "Datos que recopilamos",
+    "dataCollectedBody": "Tu dirección de correo corporativo y tu nombre para mostrar de Microsoft. Recibimos ambos desde tu cuenta de trabajo de Microsoft cuando inicias sesión. No recopilamos nada más de tu perfil de Microsoft.",
+    "purposeHeading": "Por qué los recopilamos",
+    "purposeBody": "El correo se usa para verificar que eres un colaborador elegible de Nortal. El nombre para mostrar aparece en la tabla de clasificación para que tus colegas puedan reconocerte. Ambos, junto con los eventos de inicio de sesión y edición de pronósticos, se registran en un registro de auditoría para que el resultado del torneo pueda revisarse.",
+    "audienceHeading": "Quién puede ver tus datos",
+    "audienceBody": "Otros participantes ven tu nombre para mostrar y tus puntos en la tabla de clasificación. Los administradores del torneo pueden ver tu dirección de correo con fines de soporte y elegibilidad. Ningún servicio externo recibe tus datos.",
+    "legalBasisHeading": "Base legal",
+    "legalBasisBody": "Procesamos estos datos bajo interés legítimo en el contexto de tu empleo en Nortal. La participación en el torneo es voluntaria; no hay un paso de consentimiento aparte para el MVP.",
+    "retentionHeading": "Cuánto tiempo conservamos tus datos",
+    "retentionBody": "El período de retención de los pronósticos, puntuaciones y datos de auditoría tras la conclusión del torneo será establecido por Privacidad y Legal de Nortal antes del lanzamiento y se añadirá aquí.",
+    "backLabel": "Volver al inicio de sesión",
+    "welcomeSummary": "Recopilamos tu correo corporativo y tu nombre para mostrar para verificar la elegibilidad y mostrar tu nombre en la tabla de clasificación.",
+    "learnMore": "Más información"
+  },
+  "predictions": {
+    "formHeading": "Tu pronóstico",
+    "homeLabel": "Local",
+    "awayLabel": "Visitante",
+    "submitButton": "Guardar",
+    "submittingButton": "Guardando…",
+    "lockedHeading": "Pronóstico bloqueado",
+    "lockedNoPredictionMessage": "Los pronósticos para este partido están cerrados. No enviaste el tuyo.",
+    "lockedNowMessage": "Edición cerrada (menos de 60 minutos para el inicio).",
+    "lockingNow": "Bloqueando ahora",
+    "locksInHoursMinutes": "Se bloquea en {hours} h {minutes} min",
+    "locksInMinutes": "Se bloquea en {minutes} min",
+    "successToast": "Pronóstico guardado.",
+    "errorOutOfRange": "Los marcadores deben ser números enteros entre 0 y 20.",
+    "errorLocked": "Ventana de edición cerrada; este pronóstico está bloqueado.",
+    "errorMatchNotFound": "No pudimos encontrar este partido.",
+    "errorParticipantNotFound": "No se pudo localizar tu cuenta de participante. Cierra sesión e inicia sesión de nuevo.",
+    "errorGeneric": "No se pudo guardar tu pronóstico. Inténtalo de nuevo.",
+    "final": {
+      "pageHeading": "Pronósticos finales",
+      "pageDescription": "Elige al campeón del torneo, al subcampeón, al goleador y al mejor jugador. Puedes guardar selecciones parciales y actualizarlas hasta el primer partido.",
+      "championLabel": "Equipo campeón",
+      "runnerUpLabel": "Equipo subcampeón",
+      "topScorerLabel": "Goleador",
+      "bestPlayerLabel": "Mejor jugador",
+      "noPickPlaceholder": "— Sin selección —",
+      "playerPlaceholder": "Busca un jugador…",
+      "rostersPendingPlaceholder": "Listas de jugadores aún no anunciadas",
+      "rostersPendingNotice": "Los selectores de jugador se activarán cuando FIFA publique las listas oficiales.",
+      "noMatchingPlayers": "No hay jugadores que coincidan.",
+      "saveButton": "Guardar",
+      "savingButton": "Guardando…",
+      "successToast": "Pronósticos guardados.",
+      "errorLocked": "La ventana de pronósticos finales se cerró (el primer partido ya comenzó).",
+      "errorChampionEqualsRunnerUp": "El campeón y el subcampeón deben ser equipos diferentes.",
+      "errorParticipantNotFound": "No se pudo localizar tu cuenta de participante. Cierra sesión e inicia sesión de nuevo.",
+      "errorGeneric": "No se pudieron guardar tus selecciones. Inténtalo de nuevo.",
+      "lockedHeading": "Pronósticos finales bloqueados",
+      "lockedMessage": "El primer partido del torneo comenzó; los pronósticos finales ya no se pueden editar."
+    },
+    "breakdown": {
+      "pageHeading": "Tu desglose de puntos",
+      "pageDescription": "Puntos que has ganado en cada partido y en tus pronósticos finales.",
+      "tableCaption": "Puntos por partido y por pronóstico final",
+      "colMatch": "Partido",
+      "colResult": "Resultado",
+      "colPoints": "Puntos",
+      "finalPredictionLabel": "Pronóstico final",
+      "totalLabel": "Total",
+      "emptyState": "Aún no tienes puntos. Tu puntuación aparecerá aquí a medida que terminen los partidos."
+    },
+    "vsSeparator": "vs"
+  }
+}

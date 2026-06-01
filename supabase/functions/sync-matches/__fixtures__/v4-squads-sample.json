@@ -1,0 +1,1028 @@
+{
+  "squadsByTeamId": {
+    "770": {
+      "id": 770,
+      "name": "England",
+      "tla": "ENG",
+      "squad": [
+        {
+          "id": 10001,
+          "name": "Lucas Silva ENG-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10002,
+          "name": "Mateo Garcia ENG-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10003,
+          "name": "Alex Rossi ENG-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10004,
+          "name": "Diego Schmidt ENG-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10005,
+          "name": "Carlos Dubois ENG-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "773": {
+      "id": 773,
+      "name": "France",
+      "tla": "FRA",
+      "squad": [
+        {
+          "id": 10006,
+          "name": "Mateo Rossi FRA-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10007,
+          "name": "Alex Schmidt FRA-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10008,
+          "name": "Diego Dubois FRA-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10009,
+          "name": "Carlos Smith FRA-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10010,
+          "name": "Marco Müller FRA-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "759": {
+      "id": 759,
+      "name": "Germany",
+      "tla": "GER",
+      "squad": [
+        {
+          "id": 10011,
+          "name": "Alex Dubois GER-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10012,
+          "name": "Diego Smith GER-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10013,
+          "name": "Carlos Müller GER-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10014,
+          "name": "Marco Tanaka GER-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10015,
+          "name": "Pedro Kim GER-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "784": {
+      "id": 784,
+      "name": "Italy",
+      "tla": "ITA",
+      "squad": [
+        {
+          "id": 10016,
+          "name": "Diego Müller ITA-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10017,
+          "name": "Carlos Tanaka ITA-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10018,
+          "name": "Marco Kim ITA-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10019,
+          "name": "Pedro Lopez ITA-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10020,
+          "name": "Sam Silva ITA-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "760": {
+      "id": 760,
+      "name": "Spain",
+      "tla": "ESP",
+      "squad": [
+        {
+          "id": 10021,
+          "name": "Carlos Kim ESP-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10022,
+          "name": "Marco Lopez ESP-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10023,
+          "name": "Pedro Silva ESP-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10024,
+          "name": "Sam Garcia ESP-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10025,
+          "name": "Tom Rossi ESP-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "765": {
+      "id": 765,
+      "name": "Portugal",
+      "tla": "POR",
+      "squad": [
+        {
+          "id": 10026,
+          "name": "Marco Silva POR-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10027,
+          "name": "Pedro Garcia POR-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10028,
+          "name": "Sam Rossi POR-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10029,
+          "name": "Tom Schmidt POR-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10030,
+          "name": "Jamie Dubois POR-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8601": {
+      "id": 8601,
+      "name": "Netherlands",
+      "tla": "NED",
+      "squad": [
+        {
+          "id": 10031,
+          "name": "Pedro Rossi NED-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10032,
+          "name": "Sam Schmidt NED-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10033,
+          "name": "Tom Dubois NED-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10034,
+          "name": "Jamie Smith NED-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10035,
+          "name": "Lucas Müller NED-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "805": {
+      "id": 805,
+      "name": "Belgium",
+      "tla": "BEL",
+      "squad": [
+        {
+          "id": 10036,
+          "name": "Sam Dubois BEL-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10037,
+          "name": "Tom Smith BEL-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10038,
+          "name": "Jamie Müller BEL-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10039,
+          "name": "Lucas Tanaka BEL-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10040,
+          "name": "Mateo Kim BEL-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "799": {
+      "id": 799,
+      "name": "Croatia",
+      "tla": "CRO",
+      "squad": [
+        {
+          "id": 10041,
+          "name": "Tom Müller CRO-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10042,
+          "name": "Jamie Tanaka CRO-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10043,
+          "name": "Lucas Kim CRO-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10044,
+          "name": "Mateo Lopez CRO-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10045,
+          "name": "Alex Silva CRO-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "782": {
+      "id": 782,
+      "name": "Denmark",
+      "tla": "DEN",
+      "squad": [
+        {
+          "id": 10046,
+          "name": "Jamie Kim DEN-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10047,
+          "name": "Lucas Lopez DEN-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10048,
+          "name": "Mateo Silva DEN-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10049,
+          "name": "Alex Garcia DEN-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10050,
+          "name": "Diego Rossi DEN-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "788": {
+      "id": 788,
+      "name": "Switzerland",
+      "tla": "SUI",
+      "squad": [
+        {
+          "id": 10051,
+          "name": "Lucas Silva SUI-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10052,
+          "name": "Mateo Garcia SUI-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10053,
+          "name": "Alex Rossi SUI-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10054,
+          "name": "Diego Schmidt SUI-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10055,
+          "name": "Carlos Dubois SUI-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "794": {
+      "id": 794,
+      "name": "Poland",
+      "tla": "POL",
+      "squad": [
+        {
+          "id": 10056,
+          "name": "Mateo Rossi POL-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10057,
+          "name": "Alex Schmidt POL-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10058,
+          "name": "Diego Dubois POL-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10059,
+          "name": "Carlos Smith POL-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10060,
+          "name": "Marco Müller POL-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "762": {
+      "id": 762,
+      "name": "Argentina",
+      "tla": "ARG",
+      "squad": [
+        {
+          "id": 10061,
+          "name": "Alex Dubois ARG-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10062,
+          "name": "Diego Smith ARG-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10063,
+          "name": "Carlos Müller ARG-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10064,
+          "name": "Marco Tanaka ARG-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10065,
+          "name": "Pedro Kim ARG-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "764": {
+      "id": 764,
+      "name": "Brazil",
+      "tla": "BRA",
+      "squad": [
+        {
+          "id": 10066,
+          "name": "Diego Müller BRA-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10067,
+          "name": "Carlos Tanaka BRA-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10068,
+          "name": "Marco Kim BRA-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10069,
+          "name": "Pedro Lopez BRA-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10070,
+          "name": "Sam Silva BRA-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "769": {
+      "id": 769,
+      "name": "Uruguay",
+      "tla": "URU",
+      "squad": [
+        {
+          "id": 10071,
+          "name": "Carlos Kim URU-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10072,
+          "name": "Marco Lopez URU-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10073,
+          "name": "Pedro Silva URU-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10074,
+          "name": "Sam Garcia URU-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10075,
+          "name": "Tom Rossi URU-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "775": {
+      "id": 775,
+      "name": "Colombia",
+      "tla": "COL",
+      "squad": [
+        {
+          "id": 10076,
+          "name": "Marco Silva COL-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10077,
+          "name": "Pedro Garcia COL-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10078,
+          "name": "Sam Rossi COL-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10079,
+          "name": "Tom Schmidt COL-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10080,
+          "name": "Jamie Dubois COL-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "797": {
+      "id": 797,
+      "name": "Chile",
+      "tla": "CHI",
+      "squad": [
+        {
+          "id": 10081,
+          "name": "Pedro Rossi CHI-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10082,
+          "name": "Sam Schmidt CHI-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10083,
+          "name": "Tom Dubois CHI-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10084,
+          "name": "Jamie Smith CHI-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10085,
+          "name": "Lucas Müller CHI-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "791": {
+      "id": 791,
+      "name": "Ecuador",
+      "tla": "ECU",
+      "squad": [
+        {
+          "id": 10086,
+          "name": "Sam Dubois ECU-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10087,
+          "name": "Tom Smith ECU-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10088,
+          "name": "Jamie Müller ECU-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10089,
+          "name": "Lucas Tanaka ECU-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10090,
+          "name": "Mateo Kim ECU-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "790": {
+      "id": 790,
+      "name": "United States",
+      "tla": "USA",
+      "squad": [
+        {
+          "id": 10091,
+          "name": "Tom Müller USA-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10092,
+          "name": "Jamie Tanaka USA-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10093,
+          "name": "Lucas Kim USA-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10094,
+          "name": "Mateo Lopez USA-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10095,
+          "name": "Alex Silva USA-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "774": {
+      "id": 774,
+      "name": "Mexico",
+      "tla": "MEX",
+      "squad": [
+        {
+          "id": 10096,
+          "name": "Jamie Kim MEX-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10097,
+          "name": "Lucas Lopez MEX-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10098,
+          "name": "Mateo Silva MEX-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10099,
+          "name": "Alex Garcia MEX-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10100,
+          "name": "Diego Rossi MEX-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "796": {
+      "id": 796,
+      "name": "Canada",
+      "tla": "CAN",
+      "squad": [
+        {
+          "id": 10101,
+          "name": "Lucas Silva CAN-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10102,
+          "name": "Mateo Garcia CAN-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10103,
+          "name": "Alex Rossi CAN-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10104,
+          "name": "Diego Schmidt CAN-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10105,
+          "name": "Carlos Dubois CAN-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8617": {
+      "id": 8617,
+      "name": "Costa Rica",
+      "tla": "CRC",
+      "squad": [
+        {
+          "id": 10106,
+          "name": "Mateo Rossi CRC-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10107,
+          "name": "Alex Schmidt CRC-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10108,
+          "name": "Diego Dubois CRC-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10109,
+          "name": "Carlos Smith CRC-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10110,
+          "name": "Marco Müller CRC-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8665": {
+      "id": 8665,
+      "name": "Japan",
+      "tla": "JPN",
+      "squad": [
+        {
+          "id": 10111,
+          "name": "Alex Dubois JPN-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10112,
+          "name": "Diego Smith JPN-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10113,
+          "name": "Carlos Müller JPN-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10114,
+          "name": "Marco Tanaka JPN-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10115,
+          "name": "Pedro Kim JPN-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8634": {
+      "id": 8634,
+      "name": "South Korea",
+      "tla": "KOR",
+      "squad": [
+        {
+          "id": 10116,
+          "name": "Diego Müller KOR-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10117,
+          "name": "Carlos Tanaka KOR-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10118,
+          "name": "Marco Kim KOR-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10119,
+          "name": "Pedro Lopez KOR-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10120,
+          "name": "Sam Silva KOR-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8602": {
+      "id": 8602,
+      "name": "Australia",
+      "tla": "AUS",
+      "squad": [
+        {
+          "id": 10121,
+          "name": "Carlos Kim AUS-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10122,
+          "name": "Marco Lopez AUS-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10123,
+          "name": "Pedro Silva AUS-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10124,
+          "name": "Sam Garcia AUS-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10125,
+          "name": "Tom Rossi AUS-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8675": {
+      "id": 8675,
+      "name": "Iran",
+      "tla": "IRN",
+      "squad": [
+        {
+          "id": 10126,
+          "name": "Marco Silva IRN-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10127,
+          "name": "Pedro Garcia IRN-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10128,
+          "name": "Sam Rossi IRN-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10129,
+          "name": "Tom Schmidt IRN-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10130,
+          "name": "Jamie Dubois IRN-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8703": {
+      "id": 8703,
+      "name": "Saudi Arabia",
+      "tla": "KSA",
+      "squad": [
+        {
+          "id": 10131,
+          "name": "Pedro Rossi KSA-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10132,
+          "name": "Sam Schmidt KSA-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10133,
+          "name": "Tom Dubois KSA-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10134,
+          "name": "Jamie Smith KSA-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10135,
+          "name": "Lucas Müller KSA-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8623": {
+      "id": 8623,
+      "name": "Morocco",
+      "tla": "MAR",
+      "squad": [
+        {
+          "id": 10136,
+          "name": "Sam Dubois MAR-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10137,
+          "name": "Tom Smith MAR-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10138,
+          "name": "Jamie Müller MAR-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10139,
+          "name": "Lucas Tanaka MAR-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10140,
+          "name": "Mateo Kim MAR-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8649": {
+      "id": 8649,
+      "name": "Senegal",
+      "tla": "SEN",
+      "squad": [
+        {
+          "id": 10141,
+          "name": "Tom Müller SEN-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10142,
+          "name": "Jamie Tanaka SEN-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10143,
+          "name": "Lucas Kim SEN-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10144,
+          "name": "Mateo Lopez SEN-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10145,
+          "name": "Alex Silva SEN-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8607": {
+      "id": 8607,
+      "name": "Egypt",
+      "tla": "EGY",
+      "squad": [
+        {
+          "id": 10146,
+          "name": "Jamie Kim EGY-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10147,
+          "name": "Lucas Lopez EGY-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10148,
+          "name": "Mateo Silva EGY-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10149,
+          "name": "Alex Garcia EGY-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10150,
+          "name": "Diego Rossi EGY-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8654": {
+      "id": 8654,
+      "name": "Tunisia",
+      "tla": "TUN",
+      "squad": [
+        {
+          "id": 10151,
+          "name": "Lucas Silva TUN-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10152,
+          "name": "Mateo Garcia TUN-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10153,
+          "name": "Alex Rossi TUN-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10154,
+          "name": "Diego Schmidt TUN-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10155,
+          "name": "Carlos Dubois TUN-5",
+          "position": "Midfielder"
+        }
+      ]
+    },
+    "8645": {
+      "id": 8645,
+      "name": "Nigeria",
+      "tla": "NGA",
+      "squad": [
+        {
+          "id": 10156,
+          "name": "Mateo Rossi NGA-1",
+          "position": "Goalkeeper"
+        },
+        {
+          "id": 10157,
+          "name": "Alex Schmidt NGA-2",
+          "position": "Defender"
+        },
+        {
+          "id": 10158,
+          "name": "Diego Dubois NGA-3",
+          "position": "Defender"
+        },
+        {
+          "id": 10159,
+          "name": "Carlos Smith NGA-4",
+          "position": "Midfielder"
+        },
+        {
+          "id": 10160,
+          "name": "Marco Müller NGA-5",
+          "position": "Midfielder"
+        }
+      ]
+    }
+  }
+}

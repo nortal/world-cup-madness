@@ -1,0 +1,187 @@
+{
+  "landing": {
+    "headline": "World Cup Madness",
+    "description": "Faça palpites para cada jogo da Copa do Mundo FIFA 2026 e compita com seus colegas."
+  },
+  "signIn": {
+    "label": "Entrar com a Microsoft",
+    "loading": "Entrando…",
+    "error": "Não foi possível iniciar o login. Tente novamente."
+  },
+  "dashboard": {
+    "greeting": "Olá, {name}",
+    "emptyState": "Ainda não há jogos próximos. O calendário aparecerá aqui quando o torneio for confirmado.",
+    "adminNavLabel": "Console de administração",
+    "nav": {
+      "predictionsAria": "Palpites",
+      "finalPredictions": "Palpites finais",
+      "breakdown": "Seu detalhamento"
+    }
+  },
+  "welcome": {
+    "title": "Bem-vindo ao World Cup Madness",
+    "intro": "Veja como o bolão funciona.",
+    "scoringExact": "Placar exato: 10 pontos por jogo",
+    "scoringOutcome": "Apenas o resultado correto (vitória, derrota ou empate): 5 pontos",
+    "scoringWrong": "Resultado errado: 0 pontos",
+    "scoringFinal": "Palpites finais (campeão, vice-campeão, artilheiro, melhor jogador): 20 pontos cada",
+    "lockWindow": "Os palpites de jogos são bloqueados 60 minutos antes do pontapé inicial.",
+    "deadline": "Os palpites finais são bloqueados no primeiro pontapé inicial do torneio.",
+    "gotIt": "Entendi"
+  },
+  "matches": {
+    "pageHeading": "Jogos",
+    "pageDescription": "Todos os jogos da Copa do Mundo FIFA 2026.",
+    "emptyCatalog": "O calendário de jogos ainda não foi carregado. Um administrador irá publicá-lo em breve.",
+    "viewAllMatches": "Ver todos os jogos",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "yesterday": "Ontem",
+    "vs": "x",
+    "stages": {
+      "group": "Fase de grupos",
+      "round-of-16": "Oitavas de final",
+      "quarter-final": "Quartas de final",
+      "semi-final": "Semifinais",
+      "third-place": "Disputa do terceiro lugar",
+      "final": "Final"
+    },
+    "groupLabel": "Grupo {letter}",
+    "badge": {
+      "upcoming": "EM BREVE",
+      "locked": "BLOQUEADO",
+      "finished": "FINALIZADO"
+    },
+    "countdown": {
+      "locksIn": "Bloqueia em {time}",
+      "hoursMinutes": "{hours} h {minutes} min",
+      "minutesOnly": "{minutes} min",
+      "minutesSeconds": "{minutes} min {seconds} s",
+      "lockingNow": "Bloqueando agora"
+    },
+    "filters": {
+      "allStages": "Todas as fases",
+      "allGroups": "Todos os grupos",
+      "allTeams": "Todos os times",
+      "apply": "Aplicar filtros",
+      "clearFilters": "Limpar filtros"
+    },
+    "detail": {
+      "backToList": "Voltar para jogos",
+      "kickoff": "Pontapé inicial",
+      "venue": "Estádio",
+      "finalScore": "Placar final",
+      "status": "Situação"
+    },
+    "dashboardWidget": {
+      "heading": "Próximos jogos",
+      "emptyState": "Ainda não há próximos jogos programados."
+    }
+  },
+  "profile": {
+    "heading": "Seu perfil",
+    "emailLabel": "E-mail",
+    "displayNameLabel": "Nome de exibição",
+    "saveButton": "Salvar",
+    "savingButton": "Salvando…",
+    "successToast": "Nome de exibição atualizado.",
+    "errorEmpty": "O nome de exibição não pode ficar vazio.",
+    "errorTooLong": "O nome de exibição deve ter 100 caracteres ou menos.",
+    "errorNotFound": "Não foi possível localizar sua conta de participante. Por favor, saia e entre novamente.",
+    "errorGeneric": "Não foi possível atualizar o nome de exibição. Por favor, tente novamente.",
+    "timezoneLabel": "Fuso horário",
+    "timezoneHelper": "Os horários dos jogos são exibidos neste fuso horário.",
+    "timezonePlaceholder": "Buscar fusos horários…",
+    "timezoneSaveButton": "Salvar fuso horário",
+    "timezoneSavingButton": "Salvando…",
+    "timezoneSuccessToast": "Fuso horário atualizado.",
+    "timezoneErrorEmpty": "O fuso horário é obrigatório.",
+    "timezoneErrorTooLong": "O fuso horário deve ter no máximo 64 caracteres.",
+    "timezoneErrorNotFound": "Sua conta de participante não foi encontrada. Saia e entre novamente.",
+    "timezoneErrorGeneric": "Não foi possível atualizar o fuso horário. Tente novamente."
+  },
+  "accessDenied": {
+    "heading": "Este torneio é para colaboradores da Nortal",
+    "body": "O login foi recusado porque sua conta Microsoft não pertence ao tenant da Nortal no Entra.",
+    "retryLabel": "Entrar com outra conta",
+    "contact": "Se você acredita que isso é um engano, entre em contato com o administrador do torneio."
+  },
+  "authError": {
+    "heading": "O login não foi concluído",
+    "body": "Algo interrompeu o login. Isso costuma ser temporário — por favor, tente novamente.",
+    "retryLabel": "Tentar login novamente",
+    "contact": "Se o problema persistir, entre em contato com o administrador do torneio.",
+    "statusLinkLabel": "Ver status do serviço"
+  },
+  "privacy": {
+    "linkLabel": "Aviso de privacidade",
+    "heading": "Aviso de privacidade",
+    "intro": "World Cup Madness é um bolão interno da Nortal. Veja o que coletamos, por quê e quem pode ver.",
+    "dataCollectedHeading": "Dados que coletamos",
+    "dataCollectedBody": "Seu endereço de e-mail corporativo e seu nome de exibição da Microsoft. Recebemos ambos da sua conta corporativa Microsoft quando você entra. Não coletamos mais nada do seu perfil Microsoft.",
+    "purposeHeading": "Por que coletamos",
+    "purposeBody": "O e-mail é usado para verificar se você é um colaborador elegível da Nortal. O nome de exibição aparece na classificação para que seus colegas possam reconhecê-lo. Ambos, junto com os eventos de login e de edição de palpites, são registrados em um log de auditoria para que o resultado do torneio possa ser revisado.",
+    "audienceHeading": "Quem pode ver seus dados",
+    "audienceBody": "Outros participantes veem seu nome de exibição e seus pontos na classificação. Os administradores do torneio podem ver seu endereço de e-mail para fins de suporte e elegibilidade. Nenhum serviço externo recebe seus dados.",
+    "legalBasisHeading": "Base legal",
+    "legalBasisBody": "Processamos esses dados com base no interesse legítimo, no contexto do seu vínculo empregatício com a Nortal. A participação no bolão é voluntária; não há etapa de consentimento separada para o MVP.",
+    "retentionHeading": "Por quanto tempo guardamos seus dados",
+    "retentionBody": "O período de retenção dos palpites, pontuações e dados de auditoria após o término do torneio será definido pelas equipes de Privacidade e Jurídico da Nortal antes do lançamento e adicionado aqui.",
+    "backLabel": "Voltar para o login",
+    "welcomeSummary": "Coletamos seu e-mail corporativo e seu nome de exibição para verificar a elegibilidade e mostrar seu nome na classificação.",
+    "learnMore": "Saiba mais"
+  },
+  "predictions": {
+    "formHeading": "Seu palpite",
+    "homeLabel": "Casa",
+    "awayLabel": "Fora",
+    "submitButton": "Salvar",
+    "submittingButton": "Salvando…",
+    "lockedHeading": "Palpite bloqueado",
+    "lockedNoPredictionMessage": "Os palpites para esta partida estão fechados. Você não enviou o seu.",
+    "lockedNowMessage": "Edição fechada (menos de 60 minutos para o início).",
+    "lockingNow": "Bloqueando agora",
+    "locksInHoursMinutes": "Bloqueia em {hours}h {minutes}min",
+    "locksInMinutes": "Bloqueia em {minutes}min",
+    "successToast": "Palpite salvo.",
+    "errorOutOfRange": "Os placares devem ser números inteiros entre 0 e 20.",
+    "errorLocked": "Janela de edição fechada; este palpite está bloqueado.",
+    "errorMatchNotFound": "Não conseguimos encontrar esta partida.",
+    "errorParticipantNotFound": "Sua conta de participante não pôde ser localizada. Saia e entre novamente.",
+    "errorGeneric": "Não foi possível salvar seu palpite. Tente novamente.",
+    "final": {
+      "pageHeading": "Palpites finais",
+      "pageDescription": "Escolha o campeão do torneio, o vice-campeão, o artilheiro e o melhor jogador. Você pode salvar palpites parciais e atualizá-los até a primeira partida.",
+      "championLabel": "Time campeão",
+      "runnerUpLabel": "Time vice-campeão",
+      "topScorerLabel": "Artilheiro",
+      "bestPlayerLabel": "Melhor jogador",
+      "noPickPlaceholder": "— Sem escolha —",
+      "playerPlaceholder": "Buscar um jogador…",
+      "rostersPendingPlaceholder": "Listas de jogadores ainda não anunciadas",
+      "rostersPendingNotice": "Os seletores de jogador serão ativados quando a FIFA publicar as listas oficiais.",
+      "noMatchingPlayers": "Nenhum jogador correspondente.",
+      "saveButton": "Salvar",
+      "savingButton": "Salvando…",
+      "successToast": "Palpites finais salvos.",
+      "errorLocked": "A janela de palpites finais foi fechada (a primeira partida já começou).",
+      "errorChampionEqualsRunnerUp": "O campeão e o vice-campeão devem ser times diferentes.",
+      "errorParticipantNotFound": "Sua conta de participante não pôde ser localizada. Saia e entre novamente.",
+      "errorGeneric": "Não foi possível salvar seus palpites. Tente novamente.",
+      "lockedHeading": "Palpites finais bloqueados",
+      "lockedMessage": "A primeira partida do torneio começou; os palpites finais não podem mais ser editados."
+    },
+    "breakdown": {
+      "pageHeading": "Seu detalhamento de pontos",
+      "pageDescription": "Pontos que você ganhou em cada partida e nos seus palpites finais.",
+      "tableCaption": "Pontos por partida e por palpite final",
+      "colMatch": "Partida",
+      "colResult": "Resultado",
+      "colPoints": "Pontos",
+      "finalPredictionLabel": "Palpite final",
+      "totalLabel": "Total",
+      "emptyState": "Ainda sem pontos. Sua pontuação aparecerá aqui conforme as partidas terminarem."
+    },
+    "vsSeparator": "x"
+  }
+}
