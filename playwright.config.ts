@@ -33,6 +33,11 @@ loadEnvConfig(process.cwd());
  */
 export default defineConfig({
   testDir: './e2e/tests',
+  // Run once before the whole suite to wipe any matches / players /
+  // integration_runs leaked by a prior interrupted run. Per-spec
+  // `beforeEach` cleanups remain the primary defence; this hook just keeps
+  // the suite self-healing without every new spec needing to defend itself.
+  globalSetup: './e2e/fixtures/global-setup.ts',
   // Tests share a single Supabase DB and each `beforeEach` truncates
   // `participants` / `audit_log` / resets `tournament_config.admin_oids` via
   // `resetSupabaseState()` (see `e2e/fixtures/db.ts`). Running two specs

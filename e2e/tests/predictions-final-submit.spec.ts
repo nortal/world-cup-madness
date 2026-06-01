@@ -118,7 +118,12 @@ test.describe('US-PB / TC-P7+P8+P9 — final predictions submit + lock', () => {
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
-    for (const pid of MATCH_PROVIDER_IDS) await client.from('matches').delete().eq('provider_id', pid);
+    // Wholesale clear matches: `/predictions/final` enforces BR-LOCK-005 by
+    // looking at the GLOBALLY first non-cancelled match (`ORDER BY
+    // kickoff_utc ASC LIMIT 1`). A leaked, already-kicked-off match from a
+    // prior sync spec (or an interrupted suite run) would render the page
+    // locked, and TC-P7/P8 would never see `<select name="champion">`.
+    await client.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     for (const pid of PLAYER_PROVIDER_IDS) await client.from('players').delete().eq('provider_player_id', pid);
   });
 

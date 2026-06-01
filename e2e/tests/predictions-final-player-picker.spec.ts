@@ -71,7 +71,11 @@ test.describe('US-PB / TC-P10+P11 — player picker disabled-vs-enabled state', 
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
-    await client.from('matches').delete().eq('provider_id', MATCH_PROVIDER_ID);
+    // Wholesale clear matches: `/predictions/final` enforces BR-LOCK-005 by
+    // reading the GLOBALLY first non-cancelled match. A leaked,
+    // already-kicked-off match from a prior sync spec would lock the page
+    // and TC-P10/P11 would never see the player-picker UI.
+    await client.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     // Wholesale clear players so the empty-state is deterministic.
     await client.from('players').delete().neq('provider_player_id', -1);
     await seedScheduledMatch(client);

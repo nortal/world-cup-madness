@@ -56,20 +56,28 @@ async function seedMatchAndBPrediction(
   });
   if (matchErr) throw new Error(`seed match: ${matchErr.message}`);
 
-  // Seed participant B + B's prediction via service-role (bypasses RLS)
+  // Seed participant B + B's prediction via service-role (bypasses RLS).
+  //
+  // Per-invocation unique email: `resetSupabaseState()` clears participants
+  // but NOT `auth.users`, so a hardcoded `b@nortal.com` from a prior run
+  // would make `createUser` collide silently and the FK insert below would
+  // fail. See memory: "use per-invocation unique emails to avoid createUser
+  // collisions".
   const bAuthUserId = randomUUID();
-  await client.auth.admin.createUser({
+  const bEmail = `b-${bAuthUserId}@nortal.com`;
+  const { error: createUserErr } = await client.auth.admin.createUser({
     id: bAuthUserId,
-    email: 'b@nortal.com',
+    email: bEmail,
     email_confirm: true,
   });
+  if (createUserErr) throw new Error(`seed B auth user: ${createUserErr.message}`);
 
   const { data: bParticipant, error: bParticipantErr } = await client
     .from('participants')
     .insert({
       auth_user_id: bAuthUserId,
       oid: randomUUID(),
-      email: 'b@nortal.com',
+      email: bEmail,
       display_name: 'Participant B',
       role: 'participant',
       status: 'active',

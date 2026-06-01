@@ -628,6 +628,18 @@ test.describe('all pages — WCAG 2.1 AA axe-core sweep', () => {
     const serviceRole = getServiceRoleClient();
     const [eng] = await pickFiveTeamUuids(serviceRole);
 
+    // Wholesale clear matches: `/predictions/final` enforces BR-LOCK-005 by
+    // reading the GLOBALLY first non-cancelled match. A leaked,
+    // already-kicked-off match from a prior sync spec would lock the page
+    // and the combobox-open audit would never get to render the form.
+    const matchesClear = await serviceRole
+      .from('matches')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (matchesClear.error) {
+      throw new Error(`predictions/final a11y test: matches clear failed: ${matchesClear.error.message}`);
+    }
+
     // Seed a future match so the final-predictions window is OPEN (not locked).
     const kickoff = new Date();
     kickoff.setUTCDate(kickoff.getUTCDate() + 5);
