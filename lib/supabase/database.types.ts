@@ -606,6 +606,34 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_self: {
+        Row: {
+          display_name: string | null
+          exact_hits: number | null
+          final_points: number | null
+          outcome_hits: number | null
+          participant_id: string | null
+          rank: number | null
+          rank_is_shared: boolean | null
+          stage: string | null
+          total_points: number | null
+        }
+        Relationships: []
+      }
+      leaderboard_snapshots: {
+        Row: {
+          display_name: string | null
+          exact_hits: number | null
+          final_points: number | null
+          outcome_hits: number | null
+          participant_id: string | null
+          rank: number | null
+          rank_is_shared: boolean | null
+          stage: string | null
+          total_points: number | null
+        }
+        Relationships: []
+      }
       participants_public: {
         Row: {
           created_at: string | null
@@ -789,6 +817,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_leaderboard: { Args: never; Returns: Json }
       runtests:
         | { Args: never; Returns: string[] }
         | { Args: { "": string }; Returns: string[] }
@@ -797,6 +826,7 @@ export type Database = {
         Args: { p_id: string; p_item: string }
         Returns: Json
       }
+      should_refresh_leaderboard: { Args: never; Returns: boolean }
       skip:
         | { Args: { "": string }; Returns: string }
         | { Args: { how_many: number; why: string }; Returns: string }
