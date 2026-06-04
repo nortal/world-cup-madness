@@ -36,3 +36,44 @@ export function formatStageHref(stage: Stage, page?: number): string {
   }
   return base;
 }
+
+/**
+ * Map a leaderboard stage code (the MV's short codes) to the long-form
+ * `matches.stage` labels stored in the `matches` table (feature 002 schema —
+ * see migration 0012 CHECK constraint).
+ *
+ * The MV uses `'group' | 'r16' | 'quarter' | 'semi' | 'final'` (per the CTE
+ * definitions in migration 0032); the `matches.stage` column uses
+ * `'group' | 'round-of-16' | 'quarter-final' | 'semi-final' | 'final' |
+ * 'third-place'`. The MV's `'final'` stage aggregates BOTH `'final'` AND
+ * `'third-place'` match rows — the same aggregation rule is reused here so
+ * the per-stage "no finished matches yet" check (US-LE T037) is consistent
+ * with what the MV actually scores into the row.
+ *
+ * `'all'` returns every long-form label so callers using this helper for
+ * "any finished match in any stage" queries get the same set as a global
+ * scan.
+ */
+export function stageMatchLabels(stage: Stage): readonly string[] {
+  switch (stage) {
+    case 'group':
+      return ['group'];
+    case 'r16':
+      return ['round-of-16'];
+    case 'quarter':
+      return ['quarter-final'];
+    case 'semi':
+      return ['semi-final'];
+    case 'final':
+      return ['final', 'third-place'];
+    case 'all':
+      return [
+        'group',
+        'round-of-16',
+        'quarter-final',
+        'semi-final',
+        'final',
+        'third-place',
+      ];
+  }
+}

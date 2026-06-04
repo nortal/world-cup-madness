@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 
-import { formatStageHref, parseStage } from '../stage-url-state';
+import { formatStageHref, parseStage, stageMatchLabels } from '../stage-url-state';
 
 describe('parseStage', () => {
   it('returns "all" for null', () => {
@@ -59,5 +59,40 @@ describe('formatStageHref', () => {
 
   it('appends page=99 for late pages', () => {
     expect(formatStageHref('final', 99)).toBe('/leaderboard?stage=final&page=99');
+  });
+});
+
+describe('stageMatchLabels', () => {
+  it('maps "group" to single long-form label', () => {
+    expect(stageMatchLabels('group')).toEqual(['group']);
+  });
+
+  it('maps "r16" to "round-of-16"', () => {
+    expect(stageMatchLabels('r16')).toEqual(['round-of-16']);
+  });
+
+  it('maps "quarter" to "quarter-final"', () => {
+    expect(stageMatchLabels('quarter')).toEqual(['quarter-final']);
+  });
+
+  it('maps "semi" to "semi-final"', () => {
+    expect(stageMatchLabels('semi')).toEqual(['semi-final']);
+  });
+
+  it('maps "final" to both "final" AND "third-place" (MV aggregation rule)', () => {
+    // The MV's `final` stage aggregates both real-tournament stages because
+    // the third-place match's points roll up under the same UI tab.
+    expect(stageMatchLabels('final')).toEqual(['final', 'third-place']);
+  });
+
+  it('maps "all" to every tournament stage long-form label', () => {
+    expect(stageMatchLabels('all')).toEqual([
+      'group',
+      'round-of-16',
+      'quarter-final',
+      'semi-final',
+      'final',
+      'third-place',
+    ]);
   });
 });

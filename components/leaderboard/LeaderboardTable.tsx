@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { useTranslations } from 'next-intl';
 
 import { formatRank } from '@/lib/leaderboard/format-rank';
 import type { LeaderboardRow } from '@/lib/leaderboard/types';
@@ -32,7 +32,7 @@ type LeaderboardTableProps = {
   locale: string;
 };
 
-export default async function LeaderboardTable({
+export default function LeaderboardTable({
   stage,
   page,
   rows,
@@ -42,8 +42,13 @@ export default async function LeaderboardTable({
   // so the parent (T015) doesn't refactor when US-LE adds locale-aware
   // count formatting.
   locale: _locale,
-}: LeaderboardTableProps): Promise<React.ReactElement> {
-  const t = await getTranslations('leaderboard');
+}: LeaderboardTableProps): React.ReactElement {
+  // Uses the universal `next-intl` `useTranslations` (not the
+  // `next-intl/server` variant) so that this component can be rendered
+  // by both Server Components (LeaderboardPage for SSR initial paint)
+  // and Client Components (LeaderboardRealtime for live re-renders on
+  // MV refresh — feature 004 US-LC T027).
+  const t = useTranslations('leaderboard');
 
   return (
     <div className="mt-6 overflow-x-auto">

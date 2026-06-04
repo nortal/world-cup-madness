@@ -194,6 +194,8 @@
     "showMyRank": "Show my rank",
     "yourRankSrLabel": "Your rank",
     "emptyMessage": "Leaderboard will appear once the first match is scored.",
+    "opensAt": "Leaderboard opens at",
+    "noMatchesYet": "No matches scheduled yet",
     "previousPage": "Previous",
     "nextPage": "Next",
     "pageIndicator": "Page {page}",
@@ -203,6 +205,12 @@
     "stageQuarter": "Quarter-final",
     "stageSemi": "Semi-final",
     "stageFinal": "Final",
-    "stageTabsLabel": "Filter leaderboard by stage"
+    "stageTabsLabel": "Filter leaderboard by stage",
+    "widgetRankLabel": "Your rank",
+    "widgetPreTournament": "Leaderboard opens at {time}",
+    "widgetDeltaUp": "Up {n}",
+    "widgetDeltaDown": "Down {n}",
+    "widgetDeltaFlat": "No change",
+    "reconnecting": "Reconnecting to live updates…"
   }
 }

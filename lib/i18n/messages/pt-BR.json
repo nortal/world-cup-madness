@@ -194,6 +194,8 @@
     "showMyRank": "Mostrar minha posição",
     "yourRankSrLabel": "Sua posição",
     "emptyMessage": "A classificação aparecerá assim que a primeira partida for pontuada.",
+    "opensAt": "A classificação abre em",
+    "noMatchesYet": "Ainda não há partidas agendadas",
     "previousPage": "Anterior",
     "nextPage": "Próxima",
     "pageIndicator": "Página {page}",
@@ -203,6 +205,12 @@
     "stageQuarter": "Quartas",
     "stageSemi": "Semis",
     "stageFinal": "Final",
-    "stageTabsLabel": "Filtrar classificação por fase"
+    "stageTabsLabel": "Filtrar classificação por fase",
+    "widgetRankLabel": "Sua posição",
+    "widgetPreTournament": "A classificação abre em {time}",
+    "widgetDeltaUp": "Sobe {n}",
+    "widgetDeltaDown": "Cai {n}",
+    "widgetDeltaFlat": "Sem mudança",
+    "reconnecting": "Reconectando às atualizações em tempo real…"
   }
 }

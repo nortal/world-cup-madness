@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 
 import AdminNavLink from '@/components/auth/AdminNavLink';
 import DashboardClient from '@/components/auth/DashboardClient';
+import RankWidget from '@/components/dashboard/RankWidget';
 import TimezoneAutoDetect from '@/components/matches/TimezoneAutoDetect';
 import UpcomingMatchesWidget from '@/components/matches/UpcomingMatchesWidget';
 import { defaultLocale, isLocale, type Locale } from '@/lib/i18n/locales';
@@ -124,6 +125,30 @@ export default async function DashboardPage() {
 
   const isFirstLogin = participant.welcome_dismissed_at === null;
 
+  // T033 (US-LD / FR-L08) — rank widget initial data. Both reads tolerate
+  // a missing row (pre-tournament has no `leaderboard_self` row, and the
+  // matches table is empty in the seed-only phase). The page renders
+  // either way; the widget itself decides what to show.
+  //
+  //   - Self-rank: `leaderboard_self` view filters to the caller's own
+  //     row via RLS — no participant_id predicate needed here.
+  //   - First kickoff: any non-cancelled match. `min()` would require a
+  //     PostgREST aggregate; one row + ORDER BY ASC + LIMIT 1 is simpler
+  //     and reuses the same index as the upcoming-matches widget.
+  const { data: selfRank } = await supabase
+    .from('leaderboard_self')
+    .select('rank')
+    .eq('stage', 'all')
+    .maybeSingle();
+
+  const { data: firstKickoffRow } = await supabase
+    .from('matches')
+    .select('kickoff_utc')
+    .neq('status', 'cancelled')
+    .order('kickoff_utc', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
   return (
     <DashboardClient isFirstLogin={isFirstLogin}>
       <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
@@ -135,6 +160,19 @@ export default async function DashboardPage() {
               server-side check. The `/admin` route is a future feature. */}
           {participant.role === 'admin' && <AdminNavLink />}
         </header>
+
+        {/* T033 (US-LD / FR-L08) — compact rank widget. Mounted ABOVE the
+            upcoming-matches widget so the participant's standing is the
+            first piece of post-greeting context they see. Pre-tournament
+            (null rank + known first kickoff) the widget renders a
+            countdown anchor; once scoring starts it shows the live rank
+            and delta arrow, refreshed via the `leaderboard.refresh`
+            audit-event Realtime proxy. */}
+        <RankWidget
+          initialRank={selfRank?.rank ?? null}
+          initialFirstKickoffUtc={firstKickoffRow?.kickoff_utc ?? null}
+          locale={locale}
+        />
 
         {/* T036 (US-MA / FR-M12) — replaced the feature-001 empty-state
             placeholder with the live upcoming-matches widget. The widget

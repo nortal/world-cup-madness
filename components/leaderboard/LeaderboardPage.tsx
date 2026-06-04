@@ -3,11 +3,15 @@ import { redirect } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 
 import EmptyLeaderboardState from '@/components/leaderboard/EmptyLeaderboardState';
-import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
+import LeaderboardRealtime from '@/components/leaderboard/LeaderboardRealtime';
 import ShowMyRankButton from '@/components/leaderboard/ShowMyRankButton';
 import StageTabStrip from '@/components/leaderboard/StageTabStrip';
 import { defaultLocale, isLocale, type Locale } from '@/lib/i18n/locales';
-import { parseStage, type Stage } from '@/lib/leaderboard/stage-url-state';
+import {
+  parseStage,
+  stageMatchLabels,
+  type Stage,
+} from '@/lib/leaderboard/stage-url-state';
 import type { LeaderboardRow } from '@/lib/leaderboard/types';
 import { createClient } from '@/lib/supabase/server';
 
@@ -68,7 +72,7 @@ export default async function LeaderboardPage({
 
   const { data: participant, error: participantError } = await supabase
     .from('participants')
-    .select('id, status')
+    .select('id, status, timezone')
     .eq('auth_user_id', user.id)
     .eq('status', 'active')
     .maybeSingle();
@@ -105,10 +109,23 @@ export default async function LeaderboardPage({
     .from('score_events')
     .select('id', { count: 'exact', head: true });
 
+  const stageLabels = {
+    all: t('stageAll'),
+    group: t('stageGroup'),
+    r16: t('stageR16'),
+    quarter: t('stageQuarter'),
+    semi: t('stageSemi'),
+    final: t('stageFinal'),
+  } as const;
+
+  const userTz = participant.timezone ?? 'UTC';
+
   if ((scoreEventsCount ?? 0) === 0) {
-    // No matches scored yet — render the empty-state placeholder. The
-    // first-kickoff lookup feeds the future US-LE countdown body; for the
-    // T012 shell it's accepted but unused.
+    // GLOBAL pre-tournament short-circuit (FR-L07 / TC-L3). No `score_events`
+    // row exists across the entire tournament — the MV is empty and there is
+    // nothing to filter into a stage tab strip. Render the page header +
+    // countdown only; the StageTabStrip is intentionally omitted here
+    // because no stage has any data to switch to.
     const { data: firstMatch } = await supabase
       .from('matches')
       .select('kickoff_utc')
@@ -126,9 +143,76 @@ export default async function LeaderboardPage({
       <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-semibold tracking-tight">{t('pageHeading')}</h1>
         <p className="mt-2 text-base text-gray-600">{t('pageDescription')}</p>
-        <EmptyLeaderboardState firstKickoffUtc={firstKickoffUtc} />
+        <EmptyLeaderboardState
+          firstKickoffUtc={firstKickoffUtc}
+          userTz={userTz}
+          locale={locale}
+        />
       </main>
     );
+  }
+
+  // PER-STAGE empty short-circuit (US-LE T037). The global guard above
+  // already covered the pre-tournament case; here we handle the in-flight
+  // case where the tournament has *some* finished matches but the CURRENTLY
+  // ACTIVE stage tab has none yet (e.g. a participant filters to "Quarter"
+  // during the group stage). Without this branch the MV would return one
+  // row per active participant all tied at 0 points ranked alphabetically
+  // — a noisy and misleading rendering. Same primitive as the pre-tournament
+  // empty state (per spec.md §3 Edge Cases — "Stage with no matches yet").
+  //
+  // Crucially we DO render the StageTabStrip here so the participant can
+  // flip back to a stage that has scored data without leaving the page.
+  if (activeStage !== 'all') {
+    const longLabels = stageMatchLabels(activeStage);
+
+    const { count: stageFinishedCount } = await supabase
+      .from('matches')
+      .select('id', { count: 'exact', head: true })
+      .in('stage', longLabels as string[])
+      .eq('status', 'finished');
+
+    if ((stageFinishedCount ?? 0) === 0) {
+      // First upcoming match for this stage — for the countdown body in
+      // `<EmptyLeaderboardState/>`. Exclude `'cancelled'` per the convention
+      // used by the global branch above.
+      const { data: firstStageMatch } = await supabase
+        .from('matches')
+        .select('kickoff_utc')
+        .in('stage', longLabels as string[])
+        .neq('status', 'cancelled')
+        .order('kickoff_utc', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      const firstKickoffUtc =
+        firstStageMatch?.kickoff_utc !== undefined &&
+        firstStageMatch?.kickoff_utc !== null
+          ? new Date(firstStageMatch.kickoff_utc)
+          : null;
+
+      return (
+        <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
+          <header className="space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight">{t('pageHeading')}</h1>
+            <p className="text-base text-gray-600">{t('pageDescription')}</p>
+          </header>
+
+          <StageTabStrip
+            activeStage={activeStage}
+            baseHref="/leaderboard"
+            labels={stageLabels}
+            ariaLabel={t('stageTabsLabel')}
+          />
+
+          <EmptyLeaderboardState
+            firstKickoffUtc={firstKickoffUtc}
+            userTz={userTz}
+            locale={locale}
+          />
+        </main>
+      );
+    }
   }
 
   // Public-projection paginated read. RLS + column-level GRANT keep this
@@ -158,15 +242,6 @@ export default async function LeaderboardPage({
   const hasPrevPage = currentPage > 1;
   const hasNextPage = rows.length === ROWS_PER_PAGE;
 
-  const stageLabels = {
-    all: t('stageAll'),
-    group: t('stageGroup'),
-    r16: t('stageR16'),
-    quarter: t('stageQuarter'),
-    semi: t('stageSemi'),
-    final: t('stageFinal'),
-  } as const;
-
   return (
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-12">
       <header className="space-y-2">
@@ -190,12 +265,21 @@ export default async function LeaderboardPage({
         />
       </div>
 
-      <LeaderboardTable
-        stage={activeStage}
-        page={currentPage}
-        rows={rows}
-        selfParticipantId={participant.id}
+      {/*
+        US-LC T028: wrap the table in the Client Realtime component so
+        that an `audit_log` INSERT with action='leaderboard.refresh'
+        (emitted by feature 003 scoring triggers via migration 0034)
+        triggers an in-place re-render. The Server Component above
+        still does the initial fetch — `initialRows` is the SSR slice
+        — so first paint is fast and SEO-friendly. The Client wrapper
+        only takes over for live updates after hydration.
+      */}
+      <LeaderboardRealtime
+        initialRows={rows}
+        activeStage={activeStage}
+        currentPage={currentPage}
         locale={locale}
+        selfParticipantId={participant.id}
       />
 
       <nav
