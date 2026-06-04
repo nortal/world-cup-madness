@@ -183,5 +183,26 @@
       "emptyState": "No points yet. Your score will appear here as matches finish."
     },
     "vsSeparator": "vs"
+  },
+  "leaderboard": {
+    "pageTitle": "Leaderboard",
+    "pageHeading": "Leaderboard",
+    "pageDescription": "Live rankings of all active participants.",
+    "rankColumn": "Rank",
+    "nameColumn": "Name",
+    "pointsColumn": "Points",
+    "showMyRank": "Show my rank",
+    "yourRankSrLabel": "Your rank",
+    "emptyMessage": "Leaderboard will appear once the first match is scored.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageIndicator": "Page {page}",
+    "stageAll": "All",
+    "stageGroup": "Group",
+    "stageR16": "Round of 16",
+    "stageQuarter": "Quarter-final",
+    "stageSemi": "Semi-final",
+    "stageFinal": "Final",
+    "stageTabsLabel": "Filter leaderboard by stage"
   }
 }

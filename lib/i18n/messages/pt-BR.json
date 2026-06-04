@@ -183,5 +183,26 @@
       "emptyState": "Ainda sem pontos. Sua pontuação aparecerá aqui conforme as partidas terminarem."
     },
     "vsSeparator": "x"
+  },
+  "leaderboard": {
+    "pageTitle": "Classificação",
+    "pageHeading": "Classificação",
+    "pageDescription": "Classificação ao vivo de todos os participantes ativos.",
+    "rankColumn": "Posição",
+    "nameColumn": "Nome",
+    "pointsColumn": "Pontos",
+    "showMyRank": "Mostrar minha posição",
+    "yourRankSrLabel": "Sua posição",
+    "emptyMessage": "A classificação aparecerá assim que a primeira partida for pontuada.",
+    "previousPage": "Anterior",
+    "nextPage": "Próxima",
+    "pageIndicator": "Página {page}",
+    "stageAll": "Todas",
+    "stageGroup": "Grupos",
+    "stageR16": "Oitavas",
+    "stageQuarter": "Quartas",
+    "stageSemi": "Semis",
+    "stageFinal": "Final",
+    "stageTabsLabel": "Filtrar classificação por fase"
   }
 }
