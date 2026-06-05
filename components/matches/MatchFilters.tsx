@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 /**
@@ -133,12 +134,12 @@ export default async function MatchFilters({
         >
           {tFilters('apply')}
         </button>
-        <a
+        <Link
           href="/matches"
           className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {tFilters('clearFilters')}
-        </a>
+        </Link>
       </div>
     </form>
   );
