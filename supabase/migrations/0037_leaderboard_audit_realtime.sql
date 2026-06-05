@@ -49,8 +49,8 @@ DROP POLICY IF EXISTS audit_log_leaderboard_refresh_select ON audit_log;
 CREATE POLICY audit_log_leaderboard_refresh_select
   ON audit_log
   FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (action IN ('leaderboard.refresh', 'leaderboard.refresh_failed'));
 
 COMMENT ON POLICY audit_log_leaderboard_refresh_select ON audit_log IS
-  'Lets authenticated participants observe leaderboard refresh events via Supabase Realtime. Rows carry only caller_kind + refreshed_at metadata; no participant data (FC-L3 / NFR-L6).';
+  'Lets participants observe leaderboard refresh events via Supabase Realtime. Rows carry only caller_kind + refreshed_at metadata — no participant data (FC-L3 / NFR-L6). Grants both anon and authenticated because the supabase-js client''s Realtime channel registers its subscription with claims_role=anon before the auth session loads into the browser client; without the anon grant the WAL CDC suppresses the broadcast.';
