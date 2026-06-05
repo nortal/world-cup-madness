@@ -111,6 +111,11 @@ async function seedParticipant(
 }
 
 test.describe('US-LC — Realtime live updates', () => {
+  // First-paint compile of /dashboard + /leaderboard + Supabase Realtime
+  // subscribe + 15 s Realtime broadcast wait can each chew through the
+  // default 30 s budget after a `supabase db reset`. Give the suite room.
+  test.setTimeout(90_000);
+
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
@@ -138,7 +143,14 @@ test.describe('US-LC — Realtime live updates', () => {
 
     // Capture initial top-row text.
     const topRow = page.locator('table tbody tr').first();
+    await expect(topRow).toBeVisible();
     const before = await topRow.textContent();
+
+    // The Realtime channel subscribes inside a useEffect that runs after
+    // the page mount; without this pause the audit_log INSERT below
+    // sometimes fires before the WebSocket has joined and the page
+    // misses the event. 2s is sufficient on local Supabase.
+    await page.waitForTimeout(2_000);
 
     // Inject a higher-scoring participant via service-role, then
     // refresh MV + emit the audit row — the channel event broadcasts and
@@ -151,13 +163,14 @@ test.describe('US-LC — Realtime live updates', () => {
     if (cErr) throw new Error(`score_events seed climber failed: ${cErr.message}`);
     await refreshAndAudit(client);
 
-    // Wait up to 10s for the top row to change — Realtime channel can take
-    // a moment to establish in CI.
+    // Wait up to 15s for the top row to change — Realtime broadcast +
+    // browser re-fetch round-trip can take a moment, especially right
+    // after a fresh `supabase db reset`.
     await expect(async () => {
       const after = await topRow.textContent();
       expect(after).not.toBe(before);
       expect(after).toContain('Climber Zed');
-    }).toPass({ timeout: 10_000 });
+    }).toPass({ timeout: 15_000 });
   });
 
   test('TC-L15: forced REFRESH failure leaves page intact + scoring still commits (FC-L2)', async ({
