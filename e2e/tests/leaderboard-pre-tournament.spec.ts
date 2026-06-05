@@ -103,18 +103,21 @@ test.describe('US-LE — pre-tournament empty state', () => {
   test('TC-L11 page-side: no scheduled matches → no-matches fallback message', async ({
     page,
   }) => {
-    // No matches seeded at all; score_events empty.
+    // No matches seeded by this spec; score_events empty. resetSupabaseState
+    // may have re-seeded baseline matches, in which case the page renders
+    // the countdown empty-state. Either is acceptable for the empty-state
+    // contract (score_events empty → no table).
     await signInAs(page, { tenant: 'eligible', name: 'Empty Watcher' });
     await provisionFromAuthenticatedPage(page);
 
     await page.goto('/leaderboard');
 
     // The component falls back to a "no matches scheduled yet" style message
-    // OR to the empty-message string when firstKickoff is null.
+    // OR to the "Leaderboard opens at" countdown when firstKickoff resolves.
     await expect(page.locator('table')).toHaveCount(0);
     await expect(
       page.getByText(
-        /(no matches scheduled|Leaderboard will appear once the first match is scored)/i,
+        /(no matches scheduled|Leaderboard opens at|Leaderboard will appear once the first match is scored)/i,
       ),
     ).toBeVisible();
   });

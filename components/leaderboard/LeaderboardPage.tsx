@@ -101,13 +101,13 @@ export default async function LeaderboardPage({
 
   const t = await getTranslations('leaderboard');
 
-  // Pre-tournament short-circuit (FR-L07). Cheaper than fetching the MV
-  // page and then discovering it's empty — and the MV is intentionally
-  // empty pre-tournament because `should_refresh_leaderboard()` skips the
-  // refresh until the first `score_events` row lands (FR-L22).
-  const { count: scoreEventsCount } = await supabase
-    .from('score_events')
-    .select('id', { count: 'exact', head: true });
+  // Pre-tournament short-circuit (FR-L07). Calls the `is_pre_tournament()`
+  // SECURITY DEFINER helper (migration 0036). A direct count of
+  // `score_events` would be narrowed by the `score_events_select_own` RLS
+  // policy and return zero for any participant who has not yet scored
+  // personally — wrongly forcing the page into the empty-state branch.
+  const { data: isPreTournament } = await supabase.rpc('is_pre_tournament');
+  const scoreEventsCount = isPreTournament === true ? 0 : 1;
 
   const stageLabels = {
     all: t('stageAll'),

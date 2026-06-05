@@ -19,8 +19,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../lib/supabase/database.types';
 import { signInAs } from '../fixtures/auth';
 import { getServiceRoleClient, resetSupabaseState } from '../fixtures/db';
+import { refreshLeaderboardMV } from '../fixtures/leaderboard';
 
-const PROVIDER_IDS = [9121, 9122, 9123] as const;
+// Owned provider_id range: 9121..9140 (20 distinct rows for tie-breaker fixtures).
+const PROVIDER_IDS = Array.from({ length: 20 }, (_, i) => 9121 + i);
 
 async function provisionFromAuthenticatedPage(page: Page): Promise<void> {
   await page.goto('/dashboard');
@@ -92,25 +94,27 @@ async function seedParticipant(
   return participant!.id;
 }
 
-// Insert N score_events for one participant on a fresh match each. Each event
-// carries `points` so the MV's (total, exact_hits, outcome_hits) tuple ends
-// up as expected. `exactCount` events are inserted with points=10; `outcomeCount`
-// with points=5; remainder with points=0 to pad to `total`.
+// Insert N score_events for one participant. `exactCount` events use
+// source='match-exact' (each contributes to exact_hits), `outcomeCount` use
+// source='match-outcome' (contributes to outcome_hits). Each event carries
+// 10 pts (match-exact) or 5 pts (match-outcome) — both within the
+// score_events.points CHECK (0..20). Total is determined by the (exactCount,
+// outcomeCount) tuple — callers MUST supply enough fresh match ids
+// (one per event) because of the partial unique index on
+// (participant_id, match_id) WHERE match_id IS NOT NULL.
 async function seedTuple(
   client: SupabaseClient<Database>,
   participantId: string,
   matches: readonly string[],
-  total: number,
   exactCount: number,
   outcomeCount: number,
 ): Promise<void> {
   const events: Array<{
     participant_id: string;
     match_id: string;
-    source: 'match-exact';
+    source: 'match-exact' | 'match-outcome';
     points: number;
   }> = [];
-  let remaining = total;
   let useMatchIdx = 0;
   for (let i = 0; i < exactCount; i += 1) {
     events.push({
@@ -119,33 +123,21 @@ async function seedTuple(
       source: 'match-exact',
       points: 10,
     });
-    remaining -= 10;
   }
   for (let i = 0; i < outcomeCount; i += 1) {
     events.push({
       participant_id: participantId,
       match_id: matches[useMatchIdx++],
-      source: 'match-exact',
+      source: 'match-outcome',
       points: 5,
-    });
-    remaining -= 5;
-  }
-  // Pad to total with a single 'points = remaining' event if needed.
-  if (remaining > 0) {
-    events.push({
-      participant_id: participantId,
-      match_id: matches[useMatchIdx++],
-      source: 'match-exact',
-      points: remaining,
     });
   }
   if (events.length > 0) {
-    await client.from('score_events').insert(events);
+    const { error } = await client.from('score_events').insert(events);
+    if (error) {
+      throw new Error(`seedTuple score_events insert failed: ${error.message}`);
+    }
   }
-}
-
-async function refreshMV(client: SupabaseClient<Database>): Promise<void> {
-  await client.rpc('refresh_leaderboard' as never);
 }
 
 test.describe('US-LA tie-breakers', () => {
@@ -157,16 +149,15 @@ test.describe('US-LA tie-breakers', () => {
     }
   });
 
-  test('TC-L5: single-level tie produces unique ranks via tie-breaker chain', async ({
+  test('TC-L5: tie-breaker chain produces unique ranks via exact/outcome counts', async ({
     page,
   }) => {
     const client = getServiceRoleClient();
-    // Seed enough matches that each tuple's events have unique match ids.
+    // Seed 10 distinct matches so each participant's events can sit on
+    // separate match_ids (participant_id, match_id) unique-index.
     const matchIds: string[] = [];
-    for (let i = 0; i < 20; i += 1) {
-      const m = await seedMatch(client, 9121 + (i % 3));
-      // Reseed with unique provider ids — use 9121-9123 round-robin and
-      // accept duplicates via inserting fresh rows post-delete.
+    for (let i = 0; i < 10; i += 1) {
+      const m = await seedMatch(client, PROVIDER_IDS[i]);
       matchIds.push(m);
     }
 
@@ -175,15 +166,17 @@ test.describe('US-LA tie-breakers', () => {
     const p3 = await seedParticipant(client, 'Tie A3');
     const p4 = await seedParticipant(client, 'Tie A4');
 
-    // P1: total=100, exact=2, outcome=0 → rank 1
-    // P2: total=100, exact=1, outcome=0 → rank 2 (distinguished by exact)
-    // P3: total=100, exact=1, outcome=3 → rank 3
-    // P4: total=100, exact=1, outcome=2 → rank 4
-    await seedTuple(client, p1, matchIds.slice(0, 10), 100, 2, 0);
-    await seedTuple(client, p2, matchIds.slice(0, 10), 100, 1, 0);
-    await seedTuple(client, p3, matchIds.slice(0, 10), 100, 1, 3);
-    await seedTuple(client, p4, matchIds.slice(0, 10), 100, 1, 2);
-    await refreshMV(client);
+    // Same total points (30) across all four; tie broken by (exact, outcome).
+    //   P1: total=30, exact=3, outcome=0    → rank 1 (highest exact)
+    //   P2: total=30, exact=2, outcome=2    → rank 2
+    //   P3: total=30, exact=1, outcome=4    → rank 3
+    //   P4: total=30, exact=0, outcome=6    → rank 4
+    // Each event ≤ 20 pts (10 for match-exact, 5 for match-outcome) ✓ CHECK.
+    await seedTuple(client, p1, matchIds, 3, 0);
+    await seedTuple(client, p2, matchIds, 2, 2);
+    await seedTuple(client, p3, matchIds, 1, 4);
+    await seedTuple(client, p4, matchIds, 0, 6);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', name: 'Tie Observer' });
     await provisionFromAuthenticatedPage(page);
@@ -203,8 +196,8 @@ test.describe('US-LA tie-breakers', () => {
   test('TC-L6: full-chain tie renders shared rank with `=` suffix', async ({ page }) => {
     const client = getServiceRoleClient();
     const matchIds: string[] = [];
-    for (let i = 0; i < 12; i += 1) {
-      const m = await seedMatch(client, 9121 + (i % 3));
+    for (let i = 0; i < 5; i += 1) {
+      const m = await seedMatch(client, PROVIDER_IDS[i]);
       matchIds.push(m);
     }
 
@@ -213,13 +206,13 @@ test.describe('US-LA tie-breakers', () => {
     const p3 = await seedParticipant(client, 'Tied C');
     const p4 = await seedParticipant(client, 'Distinct D');
 
-    // P1, P2, P3: identical (total=30, exact=1, outcome=4) → shared rank 1=
-    await seedTuple(client, p1, matchIds.slice(0, 5), 30, 1, 4);
-    await seedTuple(client, p2, matchIds.slice(0, 5), 30, 1, 4);
-    await seedTuple(client, p3, matchIds.slice(0, 5), 30, 1, 4);
-    // P4: distinct (10 points only) → rank 4
-    await seedTuple(client, p4, matchIds.slice(0, 1), 10, 0, 0);
-    await refreshMV(client);
+    // P1, P2, P3: identical (exact=1, outcome=4) → total=30, shared rank 1=
+    await seedTuple(client, p1, matchIds, 1, 4);
+    await seedTuple(client, p2, matchIds, 1, 4);
+    await seedTuple(client, p3, matchIds, 1, 4);
+    // P4: distinct (exact=1, outcome=0) → total=10 → rank 4
+    await seedTuple(client, p4, matchIds, 1, 0);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', name: 'Tie Observer' });
     await provisionFromAuthenticatedPage(page);

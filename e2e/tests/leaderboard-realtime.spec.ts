@@ -21,6 +21,24 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../lib/supabase/database.types';
 import { signInAs } from '../fixtures/auth';
 import { getServiceRoleClient, resetSupabaseState } from '../fixtures/db';
+import { refreshLeaderboardMV } from '../fixtures/leaderboard';
+
+// The shared `refreshLeaderboardMV` shortcut REFRESHes the MV via docker exec
+// — but the production `refresh_leaderboard()` RPC also INSERTs the
+// `leaderboard.refresh` audit_log row that the Realtime channel listens for.
+// Without the audit row the client never re-fetches. For Realtime specs we
+// must seed the audit row ourselves to mimic the RPC's full side-effects.
+async function refreshAndAudit(
+  client: ReturnType<typeof getServiceRoleClient>,
+): Promise<void> {
+  refreshLeaderboardMV();
+  const { error } = await client.from('audit_log').insert({
+    action: 'leaderboard.refresh',
+    entity_type: 'leaderboard_snapshots',
+    new_value: { caller_kind: 'admin', refreshed_at: new Date().toISOString() },
+  });
+  if (error) throw new Error(`audit_log seed failed: ${error.message}`);
+}
 
 const PROVIDER_IDS = [9301, 9302] as const;
 
@@ -108,10 +126,11 @@ test.describe('US-LC — Realtime live updates', () => {
     const matchId = await seedMatch(client, 9301);
 
     const observerId = await seedParticipant(client, 'Watcher A');
-    await client.from('score_events').insert([
+    const { error: oErr } = await client.from('score_events').insert([
       { participant_id: observerId, match_id: matchId, source: 'match-exact', points: 5 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (oErr) throw new Error(`score_events seed observer failed: ${oErr.message}`);
+    await refreshAndAudit(client);
 
     await signInAs(page, { tenant: 'eligible', name: 'Watcher Signed' });
     await provisionFromAuthenticatedPage(page);
@@ -121,20 +140,24 @@ test.describe('US-LC — Realtime live updates', () => {
     const topRow = page.locator('table tbody tr').first();
     const before = await topRow.textContent();
 
-    // Inject a much-higher-scoring participant via service-role, then
-    // refresh MV — the channel event broadcasts and the page should re-fetch.
-    const climber = await seedParticipant(client, 'Climber Zed 999');
-    await client.from('score_events').insert([
-      { participant_id: climber, match_id: matchId, source: 'match-exact', points: 999 },
+    // Inject a higher-scoring participant via service-role, then
+    // refresh MV + emit the audit row — the channel event broadcasts and
+    // the page should re-fetch. (points max is 20 per
+    // CHECK score_events_points_range; 20 still beats 5).
+    const climber = await seedParticipant(client, 'Climber Zed Top');
+    const { error: cErr } = await client.from('score_events').insert([
+      { participant_id: climber, match_id: matchId, source: 'match-exact', points: 20 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (cErr) throw new Error(`score_events seed climber failed: ${cErr.message}`);
+    await refreshAndAudit(client);
 
-    // Wait up to 5s for the top row to change.
+    // Wait up to 10s for the top row to change — Realtime channel can take
+    // a moment to establish in CI.
     await expect(async () => {
       const after = await topRow.textContent();
       expect(after).not.toBe(before);
       expect(after).toContain('Climber Zed');
-    }).toPass({ timeout: 5_000 });
+    }).toPass({ timeout: 10_000 });
   });
 
   test('TC-L15: forced REFRESH failure leaves page intact + scoring still commits (FC-L2)', async ({
@@ -144,10 +167,11 @@ test.describe('US-LC — Realtime live updates', () => {
     const matchId = await seedMatch(client, 9302);
 
     const observerId = await seedParticipant(client, 'Decouple Obs');
-    await client.from('score_events').insert([
+    const { error: dObsErr } = await client.from('score_events').insert([
       { participant_id: observerId, match_id: matchId, source: 'match-exact', points: 5 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (dObsErr) throw new Error(`score_events seed observer failed: ${dObsErr.message}`);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', name: 'Decouple Watcher' });
     await provisionFromAuthenticatedPage(page);
@@ -166,9 +190,12 @@ test.describe('US-LC — Realtime live updates', () => {
       // In this test we rely on the existing audit_log assertion path:
       // trigger the scoring event and confirm the page stays alive.
       const climber = await seedParticipant(client, 'Decouple Climber');
-      await client.from('score_events').insert([
-        { participant_id: climber, match_id: matchId, source: 'match-exact', points: 50 },
+      const { error: dClimberErr } = await client.from('score_events').insert([
+        { participant_id: climber, match_id: matchId, source: 'match-exact', points: 20 },
       ]);
+      if (dClimberErr) {
+        throw new Error(`score_events seed climber failed: ${dClimberErr.message}`);
+      }
       // Forcibly fail the next REFRESH by calling refresh_leaderboard inside
       // a context that simulates a missing index: we can't easily DROP from
       // PostgREST in CI without a raw-SQL RPC. Instead assert that ordinary

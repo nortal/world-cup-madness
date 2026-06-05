@@ -17,6 +17,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../lib/supabase/database.types';
 import { signInAs } from '../fixtures/auth';
 import { getServiceRoleClient, resetSupabaseState } from '../fixtures/db';
+import { refreshLeaderboardMV } from '../fixtures/leaderboard';
 
 const PROVIDER_IDS = [9201, 9202, 9203] as const;
 
@@ -90,10 +91,6 @@ async function seedParticipant(
   return participant!.id;
 }
 
-async function refreshMV(client: SupabaseClient<Database>): Promise<void> {
-  await client.rpc('refresh_leaderboard' as never);
-}
-
 test.describe('US-LB — stage filter', () => {
   test.beforeEach(async () => {
     await resetSupabaseState();
@@ -114,19 +111,22 @@ test.describe('US-LB — stage filter', () => {
     const p3 = await seedParticipant(client, 'Final Only 20');
 
     // P1: 15 group-stage points only
-    await client.from('score_events').insert([
+    const { error: e1 } = await client.from('score_events').insert([
       { participant_id: p1, match_id: matchA, source: 'match-exact', points: 15 },
     ]);
+    if (e1) throw new Error(`score_events seed P1 failed: ${e1.message}`);
     // P2: 10 group-stage + 20 final-champion
-    await client.from('score_events').insert([
+    const { error: e2 } = await client.from('score_events').insert([
       { participant_id: p2, match_id: matchA, source: 'match-exact', points: 10 },
       { participant_id: p2, match_id: null, source: 'final-champion', points: 20 },
     ]);
+    if (e2) throw new Error(`score_events seed P2 failed: ${e2.message}`);
     // P3: 20 final-champion only
-    await client.from('score_events').insert([
+    const { error: e3 } = await client.from('score_events').insert([
       { participant_id: p3, match_id: null, source: 'final-champion', points: 20 },
     ]);
-    await refreshMV(client);
+    if (e3) throw new Error(`score_events seed P3 failed: ${e3.message}`);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', name: 'Tab Observer' });
     await provisionFromAuthenticatedPage(page);
@@ -150,10 +150,11 @@ test.describe('US-LB — stage filter', () => {
     const client = getServiceRoleClient();
     const matchA = await seedGroupMatch(client, 9202);
     const p1 = await seedParticipant(client, 'Pers Tab P1');
-    await client.from('score_events').insert([
+    const { error: persErr } = await client.from('score_events').insert([
       { participant_id: p1, match_id: matchA, source: 'match-exact', points: 10 },
     ]);
-    await refreshMV(client);
+    if (persErr) throw new Error(`score_events seed failed: ${persErr.message}`);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', name: 'Pers Tab Observer' });
     await provisionFromAuthenticatedPage(page);

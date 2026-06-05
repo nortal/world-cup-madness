@@ -23,6 +23,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../lib/supabase/database.types';
 import { signInAs } from '../fixtures/auth';
 import { getServiceRoleClient, resetSupabaseState } from '../fixtures/db';
+import { refreshLeaderboardMV } from '../fixtures/leaderboard';
 
 const PROVIDER_IDS = [9601, 9602] as const;
 
@@ -113,11 +114,12 @@ test.describe('Privacy — TC-L12 column projection + WS payload minimality', ()
 
     const observer = await seedParticipant(client, 'Privacy Obs');
     const other = await seedParticipant(client, 'Other Person');
-    await client.from('score_events').insert([
+    const { error: privErr } = await client.from('score_events').insert([
       { participant_id: observer, match_id: matchId, source: 'match-exact', points: 10 },
       { participant_id: other, match_id: matchId, source: 'match-exact', points: 5 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (privErr) throw new Error(`score_events seed failed: ${privErr.message}`);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', name: 'Privacy Watcher' });
     await provisionFromAuthenticatedPage(page);
@@ -140,10 +142,11 @@ test.describe('Privacy — TC-L12 column projection + WS payload minimality', ()
     const matchId = await seedFinishedMatch(client, 9602);
 
     const observer = await seedParticipant(client, 'WS Observer');
-    await client.from('score_events').insert([
+    const { error: wsObsErr } = await client.from('score_events').insert([
       { participant_id: observer, match_id: matchId, source: 'match-exact', points: 5 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (wsObsErr) throw new Error(`score_events seed observer failed: ${wsObsErr.message}`);
+    refreshLeaderboardMV();
 
     const wsFrames: string[] = [];
     page.on('websocket', (ws) => {
@@ -157,12 +160,15 @@ test.describe('Privacy — TC-L12 column projection + WS payload minimality', ()
     await provisionFromAuthenticatedPage(page);
     await page.goto('/leaderboard');
 
-    // Trigger one MV refresh so a frame fires.
+    // Trigger one MV refresh so a frame fires. (Max 20 per CHECK.)
     const climber = await seedParticipant(client, 'WS Climber');
-    await client.from('score_events').insert([
-      { participant_id: climber, match_id: matchId, source: 'match-exact', points: 999 },
+    const { error: wsClimberErr } = await client.from('score_events').insert([
+      { participant_id: climber, match_id: matchId, source: 'match-exact', points: 20 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (wsClimberErr) {
+      throw new Error(`score_events seed climber failed: ${wsClimberErr.message}`);
+    }
+    refreshLeaderboardMV();
 
     // Give the page a moment to receive the broadcast.
     await page.waitForTimeout(2_000);
@@ -182,10 +188,11 @@ test.describe('Privacy — TC-L12 column projection + WS payload minimality', ()
     const client = getServiceRoleClient();
     const matchId = await seedFinishedMatch(client, 9603);
     const obs = await seedParticipant(client, 'Admin Side Obs');
-    await client.from('score_events').insert([
+    const { error: adminObsErr } = await client.from('score_events').insert([
       { participant_id: obs, match_id: matchId, source: 'match-exact', points: 10 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (adminObsErr) throw new Error(`score_events seed failed: ${adminObsErr.message}`);
+    refreshLeaderboardMV();
 
     await signInAs(page, { tenant: 'eligible', role: 'admin', name: 'Admin Privacy' });
     await provisionFromAuthenticatedPage(page);

@@ -16,6 +16,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../lib/supabase/database.types';
 import { signInAs } from '../fixtures/auth';
 import { getServiceRoleClient, resetSupabaseState } from '../fixtures/db';
+import { refreshLeaderboardMV } from '../fixtures/leaderboard';
 
 const PROVIDER_IDS = [9401, 9402] as const;
 
@@ -131,15 +132,17 @@ test.describe('US-LD — dashboard rank widget', () => {
       .maybeSingle();
     expect(participant).not.toBeNull();
 
-    await client.from('score_events').insert([
-      { participant_id: participant!.id, match_id: matchId, source: 'match-exact', points: 30 },
+    const { error: scoreErr } = await client.from('score_events').insert([
+      { participant_id: participant!.id, match_id: matchId, source: 'match-exact', points: 20 },
     ]);
-    await client.rpc('refresh_leaderboard' as never);
+    if (scoreErr) throw new Error(`score_events seed failed: ${scoreErr.message}`);
+    refreshLeaderboardMV();
 
     await page.goto('/dashboard');
     // Widget shows the rank label + a numeric value (rank 1 since only one
-    // participant has score_events).
-    await expect(page.getByText(/Your rank/i)).toBeVisible();
+    // participant has score_events). Multiple "Your rank" strings render
+    // (sr-only heading + visible label) — assert at least one is present.
+    await expect(page.getByText(/Your rank/i).first()).toBeVisible();
     await expect(page.getByText(/Your rank[\s:]+1\b/i).first()).toBeVisible();
   });
 });
