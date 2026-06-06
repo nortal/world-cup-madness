@@ -108,6 +108,12 @@ function refreshMV(): void {
 }
 
 test.describe('US-LA — leaderboard page', () => {
+  // TC-L9 and TC-L13 each seed 25-30 participants via auth.users + the
+  // provisioning RPC, which serialise at ~1 s per participant. The default
+  // 30 s per-test budget runs out before the assertions begin.
+  test.setTimeout(90_000);
+
+
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
