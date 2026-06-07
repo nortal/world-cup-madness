@@ -39,7 +39,7 @@ The feature is fully additive to the existing implementation.
 **Target Platform**: Vercel-hosted Next.js Server Components; participant browsers (mobile 360 px → desktop)
 **Project Type**: Web (Next.js full-stack monolith on Vercel + Supabase)
 **Performance Goals**: Server-render p95 ≤ 1 s; LCP ≤ 2.5 s on simulated 4G; 24-hour-movers query p95 ≤ 250 ms; CLS ≤ 0.1 on Realtime re-fetch
-**Constraints**: No new persistent tables (FC-D1); preserves existing dashboard surfaces (FC-D3); shares Realtime topology with `/leaderboard` (FC-D4)
+**Constraints**: No new persistent tables (FC-D1, with the one ratified read-only carve-out for migration 0038's aggregator RPC); preserves existing dashboard surfaces (FC-D3); shares Realtime topology with `/leaderboard` (FC-D4)
 **Scale/Scope**: 200 active participants + 20 finished matches at peak (FA-D1); single page (`/dashboard`) with 6 widgets; one Server Component composer; ~5 new Client Components
 
 ## Constitution Check
@@ -150,10 +150,14 @@ e2e/tests/
 ├── dashboard-realtime.spec.ts               # NEW — TC-D12, TC-D16
 └── all-pages-a11y.spec.ts                   # MODIFY — add dashboard mobile + desktop variants for TC-D14
 
-test/pgtap/                                  # NO NEW PGTAP FILES — feature is read-only
+test/pgtap/
+└── 025_movers_aggregate_rpc.sql             # NEW — pgTAP coverage for the migration 0038 RPC
+
+supabase/migrations/
+└── 0038_movers_24h_rpc.sql                  # NEW — read-only SECURITY DEFINER aggregator for FR-D11 global movers (Option A ratified 2026-06-07; see spec.md FC-D1 carve-out)
 ```
 
-**Structure Decision**: Web application (single Next.js project). All new files land under `components/dashboard/`, `components/matches/` (for the expandable card), `lib/dashboard/`, `e2e/tests/`, and modify the three locale files + `app/(participant)/dashboard/page.tsx`. Migrations directory (`supabase/migrations/`) is **untouched**; this is a frontend-only feature.
+**Structure Decision**: Web application (single Next.js project). New files land under `components/dashboard/`, `components/matches/` (for the expandable card), `lib/dashboard/`, `e2e/tests/`, plus one new migration `supabase/migrations/0038_movers_24h_rpc.sql` and one new pgTAP file `test/pgtap/025_movers_aggregate_rpc.sql`. Modifies the three locale files + `app/(participant)/dashboard/page.tsx`. The migration is a single read-only SECURITY DEFINER aggregator — no persistent schema changes, no RLS changes to existing tables.
 
 ---
 
@@ -239,10 +243,10 @@ See [data-model.md](./data-model.md) for the read-query catalogue (seven queries
 
 ### Active Streams for This Feature
 
-- [ ] [API] — Backend endpoints and services *(not active — read-only against existing tables)*
+- [ ] [API] — Backend endpoints and services *(not active — read-only against existing tables; the one new RPC is consumed via PostgREST, not a custom endpoint)*
 - [x] [UI] — Frontend components, page composer, helpers, i18n keys
-- [ ] [DB] — Database changes *(not active — zero new migrations)*
-- [x] [TEST] — Playwright specs, Jest helper specs, axe-core sweep extension
+- [x] [DB] — One new read-only migration: `0038_movers_24h_rpc.sql` (SECURITY DEFINER aggregator + pgTAP 025)
+- [x] [TEST] — Playwright specs, Jest helper specs, axe-core sweep extension, pgTAP for the new RPC
 - [ ] [INFRA] — Infrastructure changes *(not active)*
 - [x] [INT] — Pristine sweep + DoD + README + stack-constitution update
 

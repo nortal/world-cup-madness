@@ -8,12 +8,12 @@
 
 ## 1. Scope
 
-**Zero new persistent entities.** This feature is a frontend rework that reads from existing tables, views, and the materialised view shipped by features 001-004. It introduces:
+**Zero new persistent entities**, one read-only SECURITY DEFINER aggregator function (ratified 2026-06-07 — see spec.md FC-D1 carve-out). This feature is a frontend rework that reads from existing tables, views, and the materialised view shipped by features 001-004. It introduces:
 
-- 7 read queries (documented as contracts)
-- 0 migrations
-- 0 new RPCs
-- 0 changes to the `audit_log`, RLS policies, or grants
+- 8 read queries (documented as contracts)
+- 1 migration: `0038_movers_24h_rpc.sql` — read-only aggregator for FR-D11 global movers
+- 1 new RPC: `get_movers_24h_aggregate()` (SECURITY DEFINER, STABLE, no side effects)
+- 0 changes to the `audit_log`, existing RLS policies, or column-level GRANTs from features 001-004
 
 The "data model" for this feature is the **query catalogue** below.
 
@@ -122,9 +122,7 @@ WHERE awarded_at >= NOW() - INTERVAL '24 hours';
 **Performance estimate**: ~2000 rows max (200 participants × ~10 events each), indexed scan via `score_events_awarded_at_idx`.
 **RLS**: existing `score_events_select_own` policy is **narrowing** here — but the WAL CDC / Realtime concerns don't apply because this is a PostgREST read, not a subscription. The fallback aggregation in JS will receive only the caller's own rows under that RLS, breaking the global movers feature.
 
-**Mitigation**: This requires a **SECURITY DEFINER helper RPC** or a broadening RLS policy for read-only aggregation. **Decision (see contracts/query-movers-global.md)**: add a small migration `0038_movers_24h_rpc.sql` that exposes a read-only `get_movers_24h_aggregate()` SECURITY DEFINER function returning `(participant_id, delta_24h)` rows. The function is gated by `authenticated` role (no anon read) and contains no scoring logic — it's a pure aggregator. This breaks the spec's "zero migrations" stance but **only by one read-only helper**; updating the spec / Deferred Decisions §1 accordingly.
-
-> **NOTE (deviation from spec)**: This is the first deviation from the spec's "no new schema" stance (FC-D1). Documented here for the implementation phase to ratify; the migration is minimal and read-only. If the team rejects this deviation, the alternative is to scrap the global-movers feature and ship only the neighborhood-movers sub-section (which can be computed from the caller's own RLS-filtered events). Flag this for the user to confirm before `/ai1st-dev-tasks`.
+**Ratified resolution (2026-06-07)**: Migration `0038_movers_24h_rpc.sql` adds a read-only `get_movers_24h_aggregate()` SECURITY DEFINER function returning `(participant_id, delta_24h)` rows. Gated by `authenticated` role (no anon read), contains no scoring logic — it's a pure aggregator. Spec FC-D1 carve-out documented. Implementation proceeds via this single read-only function.
 
 **Used by**: `MoversWidget` (combined with 2.4 + the `computeMovers` pure helper).
 
@@ -280,21 +278,16 @@ All types are derived from the existing generated `Database` types in `lib/supab
 
 ---
 
-## 5. Open question for ratification before /ai1st-dev-tasks
+## 5. Ratification record
 
-> **Movers RLS deviation (§2.5)**: The global-movers calculation needs a `SECURITY DEFINER` helper RPC to aggregate `score_events.points` across all participants. The current spec (FC-D1) says zero new schema. Implementation will need to either:
->
-> (a) Add a minimal migration `0038_movers_24h_rpc.sql` (one read-only function, ~15 lines including REVOKE/GRANT), OR
-> (b) Drop the **global** movers sub-section of FR-D11 and ship only the **neighborhood** movers (which can be computed from the caller's own RLS-filtered events).
->
-> Flag for the user to choose during `/ai1st-dev-tasks` task generation. The recommended path is (a) — a single read-only aggregator is a small, well-contained departure from FC-D1 that unblocks a key engagement widget without introducing persistent state.
+Option A ratified 2026-06-07. Migration `0038_movers_24h_rpc.sql` is in scope; see `contracts/query-movers-global.md` for the SQL definition and `spec.md` FC-D1 for the carve-out language.
 
 ---
 
 ## Summary
 
 - 8 read queries documented (one per widget surface + auth).
-- 0 new persistent entities, 0 RLS changes — with one outstanding deviation flagged in §2.5 / §5 for ratification.
+- 0 new persistent entities, 0 RLS changes to existing tables, 1 read-only SECURITY DEFINER aggregator function (migration 0038).
 - 4 new derived TypeScript types in `lib/dashboard/types.ts`.
 
 Proceed to `contracts/` for per-query contract documents.

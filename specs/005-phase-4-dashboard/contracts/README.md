@@ -9,7 +9,7 @@ This directory documents the read-query, RPC, and Realtime-channel contracts the
 | `reused-rpc-lock-prediction.md` | RPC (REUSED) | Inline-edit save handler — calls feature 003's existing `lock_prediction()` |
 | `reused-realtime-leaderboard-refresh.md` | Realtime channel (REUSED) | Dashboard subscribes to feature 004's existing channel + filter |
 | `query-neighborhood.md` | Read query (NEW) | Pool tab — hybrid-clamped ±5 neighborhood slice |
-| `query-movers-global.md` | Read query (NEW — needs ratification, see §2.5 of data-model.md) | Pool tab — global top 3 movers in trailing 24 h |
+| `query-movers-global.md` | Read query (NEW) + migration 0038 (NEW — read-only SECURITY DEFINER aggregator, ratified 2026-06-07) | Pool tab — global top 3 movers in trailing 24 h |
 | `query-movers-neighborhood.md` | Read query (NEW) | Pool tab — top 3 movers within user's ±5 neighborhood |
 | `query-weekly-digest.md` | Read query (NEW) | Pool tab — current-week totals + best + worst |
 | `query-last-finished-prediction.md` | Read query (NEW) | Today tab — Snapshot widget "last" card |
@@ -25,6 +25,6 @@ All contracts follow this layout:
 4. **Failure modes** — what can go wrong + how widgets should degrade
 5. **Test coverage** — which Playwright spec exercises this contract end-to-end
 
-## Open ratification
+## Ratifications
 
-See [`query-movers-global.md`](./query-movers-global.md) — the global-movers section of `MoversWidget` requires either a small SECURITY DEFINER aggregator RPC (one new migration) or scope reduction to neighborhood-movers only. Flagged for user decision before `/ai1st-dev-tasks`.
+- **2026-06-07** — Option A ratified for the global-movers global aggregation. Migration `0038_movers_24h_rpc.sql` (read-only SECURITY DEFINER aggregator, `authenticated` GRANT only) is in scope. See [`query-movers-global.md`](./query-movers-global.md) for the SQL definition and `spec.md` FC-D1 for the carve-out language.

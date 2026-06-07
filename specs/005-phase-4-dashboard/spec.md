@@ -48,6 +48,9 @@ The current `/dashboard` is functional but desktop-first: the rank widget (featu
 - Q: Observability / telemetry scope for the new dashboard surfaces? → A: Minimal — structured logging (per Constitution §1.3) on inline-save success and inline-save error only. No client-side analytics SDK is introduced; tab-switch, expand-card, and widget-impression telemetry are deferred to a future ops-readiness feature.
 - Q: Realtime extended-outage behaviour (channel disconnected 60 s+)? → A: Stale data + persistent reconnecting chip until reconnect. No polling fallback, no forced reload. Rely on Supabase Realtime's exponential-backoff reconnect; the existing `ReconnectingIndicator` chip stays visible the whole time so participants understand live updates are paused. Manual page reload remains available as the user-side recovery path.
 
+### Ratification (2026-06-07, post-plan)
+- Q: Global-movers sub-section needs cross-participant aggregation that `score_events_select_own` RLS narrows away. Option A (add one read-only SECURITY DEFINER aggregator RPC, migration 0038) or Option B (drop global sub-section, ship neighborhood-only)? → A: **Option A ratified.** Migration `0038_movers_24h_rpc.sql` introduces `get_movers_24h_aggregate()` (SECURITY DEFINER, STABLE, granted to `authenticated`; ~15 lines including REVOKE/GRANT). FC-D1 ("no new persistent schema") is amended below to carve out this single read-only aggregator.
+
 ---
 
 ## 3. Workflow
@@ -144,7 +147,7 @@ The current `/dashboard` is functional but desktop-first: the rank widget (featu
 - **Admin console changes** — Admin dashboard polish, recalculate workflows, integration_runs telemetry surface are unchanged by this feature.
 - **Scoring rule changes** — Tie-breaker chain, points-per-source, lock-window constants remain as defined by features 003 and 004.
 - **New match-data integration** — No changes to football-data.org provider abstraction or sync schedule.
-- **Persistent rank-history table** — Deliberately deferred (see Deferred Decisions). 24-hour movers are computed on demand from `score_events`.
+- **Persistent rank-history table** — Deliberately deferred (see Deferred Decisions). 24-hour movers are computed on demand from `score_events` via the small read-only SECURITY DEFINER aggregator added in migration `0038_movers_24h_rpc.sql`.
 - **Multi-week historical digest** — Only the current week is shown; "last week" or "weekly trend" surfaces are out of scope for v1.
 - **Push notifications, badges, sounds** — Not in scope.
 - **Admin role dashboard variant** — Admins use the same dashboard widgets as participants; this feature does not branch behaviour by role.
@@ -237,8 +240,8 @@ The current `/dashboard` is functional but desktop-first: the rank widget (featu
 
 ## 11. Feature-Specific Constraints
 
-**FC-D1:** No new persistent schema.
-- **Description:** v1 deliberately avoids a rank-history snapshot table. Movers are computed on demand from `score_events`.
+**FC-D1:** No new persistent schema, with one read-only carve-out.
+- **Description:** v1 deliberately avoids a rank-history snapshot table or any state-changing migration. The single exception, ratified 2026-06-07, is migration `0038_movers_24h_rpc.sql` — a read-only `get_movers_24h_aggregate()` SECURITY DEFINER function that aggregates `score_events.points` across participants for the FR-D11 global-movers sub-section. The function stores no state, exposes no PII (returns `(participant_id, delta_24h)` only), and follows feature 004's `is_pre_tournament()` precedent (migration 0036).
 - **Impact:** NFR-D07 (≤ 250 ms p95) must hold at production scale. If it doesn't, the persistent-snapshot path (Deferred Decisions §1) is the escape hatch.
 
 **FC-D2:** Lock-edit collision parity.

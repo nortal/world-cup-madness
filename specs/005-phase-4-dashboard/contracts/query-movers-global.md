@@ -1,26 +1,25 @@
 # Contract — Global movers (24-hour rank delta, all participants) — NEW
 
-**Type**: PostgREST read query + potential SECURITY DEFINER aggregator RPC
+**Type**: PostgREST read query + read-only SECURITY DEFINER aggregator RPC
 **Source target**: `score_events` table + `leaderboard_snapshots` MV
-**Status**: NEW — **OPEN RATIFICATION** required (see Open Question below)
+**Status**: NEW — Option A ratified 2026-06-07 (see spec.md FC-D1 carve-out)
 
 ## Purpose
 
 Compute the global "Top 3 movers in pool" sub-section of `MoversWidget` — the three participants whose ranks have improved most in the trailing 24 hours, across all active participants (FR-D11 + FR-D12).
 
-## Open question (BLOCKS implementation)
+## Approach
 
-The naive PostgREST aggregation against `score_events` is filtered by `score_events_select_own` RLS, which narrows results to the caller's own rows. This makes a **global** movers calculation impossible without one of:
+The naive PostgREST aggregation against `score_events` is filtered by `score_events_select_own` RLS, which narrows results to the caller's own rows. To enable a global aggregation without exposing PII, this feature adds a single read-only `get_movers_24h_aggregate()` SECURITY DEFINER function (migration 0038) that returns `(participant_id, delta_24h)` rows. The function:
 
-**Option A (recommended)** — Add migration `0038_movers_24h_rpc.sql` introducing a `get_movers_24h_aggregate()` SECURITY DEFINER function that returns `(participant_id, delta_24h)` rows. The function does no scoring logic, exposes no PII (just participant_id + sum), and is gated to the `authenticated` role.
+- Aggregates `SUM(points)` from `score_events` where `awarded_at >= NOW() - INTERVAL '24 hours'`, grouped by `participant_id`.
+- Returns only `participant_id` (UUID) + `delta_24h` (smallint) — no PII, no display names, no per-event detail.
+- Is gated to the `authenticated` role (no anon execution).
+- Follows the same pattern as feature 004's `is_pre_tournament()` helper (migration 0036).
 
-**Option B** — Drop the global sub-section of FR-D11. Ship only the neighborhood-movers sub-section (computable from the caller's own RLS-filtered events combined with the public `leaderboard_snapshots` projection).
+The widget renders display names by joining the RPC result with `leaderboard_snapshots` (which is column-grant-gated to the public projection).
 
-The recommendation is Option A: it's a minimal, well-contained departure from FC-D1 ("zero new schema") that unblocks a high-value engagement widget. The function is read-only, ~15 lines including REVOKE/GRANT, and follows the same pattern as feature 004's `is_pre_tournament()` helper (migration 0036).
-
-If Option A is ratified, this contract documents the resulting RPC and query shape. If Option B is ratified, this contract is deleted and only `query-movers-neighborhood.md` survives.
-
-## Signature (assuming Option A ratification)
+## Signature
 
 ### Migration `0038_movers_24h_rpc.sql`
 
@@ -109,8 +108,8 @@ function computeMovers(
 
 - `e2e/tests/dashboard-movers.spec.ts` — TC-D9 (both sections render; deltas correct on a seeded scoring burst)
 - `lib/dashboard/__tests__/movers-24h.test.ts` — `computeMovers` pure-helper coverage of all-up, all-down, ties, empty deltas
-- `test/pgtap/025_movers_aggregate_rpc.sql` (NEW IF OPTION A RATIFIED) — assert RPC is STABLE, SECURITY DEFINER, returns expected shape, executes in ≤ 250 ms with a 200-participant fixture
+- `test/pgtap/025_movers_aggregate_rpc.sql` — assert RPC is STABLE, SECURITY DEFINER, returns expected shape, executes in ≤ 250 ms with a 200-participant fixture, denies anon execution, returns empty for pre-tournament
 
-## Decision needed
+## Implementation status
 
-User MUST ratify Option A or Option B before `/ai1st-dev-tasks` generates the implementation tasks. Without ratification, the implementation cannot proceed for the global-movers sub-section.
+Option A ratified 2026-06-07. Migration 0038 is in scope for `/ai1st-dev-tasks` and the implementation phase.
