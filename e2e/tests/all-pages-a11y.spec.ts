@@ -710,4 +710,296 @@ test.describe('all pages — WCAG 2.1 AA axe-core sweep', () => {
       .analyze();
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });
+
+  // ---------------------------------------------------------------------------
+  // Feature 004 surfaces — `/leaderboard` (TC-L16 a11y sweep across states).
+  //
+  // Spec source: `specs/004-leaderboard/tasks.md` T041 + `acceptance-criteria.md`
+  // TC-L16. The leaderboard has three structurally distinct render branches
+  // (populated table + stage tabs + Show-my-rank button; pre-tournament empty
+  // state with semantic <time> countdown and no tab strip; per-stage empty
+  // state with the StageTabStrip mounted but the EmptyLeaderboardState body).
+  // Each branch carries different a11y-relevant DOM, so all three need their
+  // own scan; running axe against just one branch would silently miss the
+  // others.
+  //
+  // The signed-in participant from `signInProvisionAndPinTz` appears as an
+  // extra row in the populated branch (rank-of-1 with 0 pts after MV refresh)
+  // — same pattern as `leaderboard-page.spec.ts:169` (expects 5 seeded + 1
+  // self-row). That row is a11y-relevant: it renders the `data-self="true"`
+  // marker and the screen-reader-only "Your rank" label that the Show-my-rank
+  // button targets.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * TC-L16 (a) — `/leaderboard` POPULATED state.
+   *
+   * Seeds five participants with descending scores against one finished
+   * group-stage match (8209), refreshes the MV, then audits the page with
+   * the StageTabStrip + ranking table + Show-my-rank button + self-row all
+   * mounted. This is the richest a11y surface the page offers.
+   */
+  test('/leaderboard (populated, 5 seeded participants) has no a11y violations', async ({
+    page,
+  }) => {
+    const serviceRole = getServiceRoleClient();
+    const [eng, fra] = await pickFiveTeamUuids(serviceRole);
+
+    // Finished group-stage match in the past so the MV's stage CTE picks it up.
+    const kickoff = new Date();
+    kickoff.setUTCDate(kickoff.getUTCDate() - 1);
+    const [seeded] = await seedA11yMatches(serviceRole, [
+      {
+        providerId: 8209,
+        homeTeamId: eng,
+        awayTeamId: fra,
+        stage: 'group',
+        groupLabel: 'A',
+        kickoffUtc: kickoff.toISOString(),
+        status: 'scheduled',
+      },
+    ]);
+    // Promote the seeded match to `finished` with a result so score_events
+    // bypass-inserts below are consistent with a real scored fixture.
+    await serviceRole
+      .from('matches')
+      .update({ status: 'finished', score_home: 1, score_away: 0 })
+      .eq('id', seeded!.id);
+
+    // Seed 5 participants directly via the service role (RLS bypass) — same
+    // shape as `leaderboard-page.spec.ts:seedParticipant`. The signed-in
+    // participant added by `signInProvisionAndPinTz` below appears as a 6th
+    // row at the bottom of the ranking (0 pts) — also a11y-scanned.
+    const names = ['A11y Alice', 'A11y Bob', 'A11y Carol', 'A11y Dave', 'A11y Eve'];
+    const points = [50, 40, 30, 20, 10];
+    const seededIds: string[] = [];
+    for (const name of names) {
+      const oid = randomUUID();
+      const email = `${oid}@nortal.com`;
+      const { data: user } = await serviceRole.auth.admin.createUser({
+        email,
+        password: 'wcm-test-password-123',
+        email_confirm: true,
+        app_metadata: { tid: '00000000-0000-0000-0000-000000000000', oid, provider: 'azure' },
+        user_metadata: { name, email },
+      });
+      const { data: participant } = await serviceRole
+        .from('participants')
+        .insert({
+          auth_user_id: user!.user!.id,
+          oid,
+          email,
+          display_name: name,
+          status: 'active',
+        })
+        .select('id')
+        .single();
+      seededIds.push(participant!.id);
+    }
+    for (let i = 0; i < seededIds.length; i += 1) {
+      await serviceRole.from('score_events').insert({
+        participant_id: seededIds[i]!,
+        match_id: seeded!.id,
+        source: 'match-exact',
+        points: points[i]!,
+      });
+    }
+    // Admin-context refresh (caller_kind='admin' route — no gating predicate).
+    await serviceRole.rpc('refresh_leaderboard' as never);
+
+    await signInProvisionAndPinTz(page);
+
+    await page.goto('/leaderboard');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Leaderboard' }),
+    ).toBeVisible();
+    // Sanity: confirm the ranking table mounted before axe runs (the other
+    // two leaderboard branches do NOT mount a <table>, so this guard
+    // discriminates the populated branch from a silent fall-through into the
+    // empty state).
+    await expect(page.locator('table')).toBeVisible();
+    await expect(page.locator('table tbody tr').first()).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  /**
+   * TC-L16 (b) — `/leaderboard` PRE-TOURNAMENT empty state.
+   *
+   * No `score_events` rows exist anywhere (FR-L07 global short-circuit), and
+   * one future scheduled match is seeded so the EmptyLeaderboardState renders
+   * its semantic `<time dateTime="...">` countdown — that's the a11y-relevant
+   * surface (date/time semantics + countdown live region) that the populated
+   * branch does NOT exercise.
+   *
+   * The score_events wholesale clear mirrors the pattern from
+   * `leaderboard-pre-tournament.spec.ts:clearAllScoreEvents` — `beforeEach`
+   * already truncates participants/audit, but score_events has its own
+   * lifecycle.
+   */
+  test('/leaderboard (pre-tournament empty state) has no a11y violations', async ({
+    page,
+  }) => {
+    const serviceRole = getServiceRoleClient();
+    const [eng, fra] = await pickFiveTeamUuids(serviceRole);
+
+    // Wholesale clear score_events — the global pre-tournament short-circuit
+    // (FR-L07) only fires when score_events is empty.
+    const clear = await serviceRole
+      .from('score_events')
+      .delete()
+      .neq('participant_id', '00000000-0000-0000-0000-000000000000');
+    if (clear.error) {
+      throw new Error(`pre-tournament a11y test: score_events clear failed: ${clear.error.message}`);
+    }
+
+    // One future scheduled match so the countdown body has a target. T+5d.
+    const kickoff = new Date();
+    kickoff.setUTCDate(kickoff.getUTCDate() + 5);
+    kickoff.setUTCHours(18, 0, 0, 0);
+    await seedA11yMatches(serviceRole, [
+      {
+        providerId: 8210,
+        homeTeamId: eng,
+        awayTeamId: fra,
+        stage: 'group',
+        groupLabel: 'A',
+        kickoffUtc: kickoff.toISOString(),
+        status: 'scheduled',
+      },
+    ]);
+
+    await signInProvisionAndPinTz(page);
+
+    await page.goto('/leaderboard');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Leaderboard' }),
+    ).toBeVisible();
+    // Sanity: confirm we're auditing the empty branch — no <table>, and the
+    // semantic <time dateTime="..."> countdown element rendered.
+    await expect(page.locator('table')).toHaveCount(0);
+    await expect(page.locator('time[datetime]').first()).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  /**
+   * TC-L16 (c) — `/leaderboard?stage=quarter` STAGE-FILTERED empty state.
+   *
+   * In-flight tournament with some finished group matches (so score_events
+   * is non-empty and the GLOBAL pre-tournament short-circuit does NOT fire)
+   * BUT the requested `stage=quarter` filter has no finished quarter-final
+   * matches yet — so the PER-STAGE empty branch fires (LeaderboardPage.tsx
+   * lines 166–215). That branch mounts the StageTabStrip + per-stage empty
+   * countdown together; neither (a) nor (b) above exercises that DOM combo.
+   *
+   * Provider_id range owned by this test: 8210 is already taken by case (b)
+   * in another test run, but `beforeEach` cleans the 8201..8210 range so the
+   * reuse here is safe within this single test's scope. We use 8210 (group,
+   * finished) + a quarter-final scheduled match at provider_id 8210's twin
+   * by reusing the same id — wait, the range is exhausted. Use a fresh
+   * non-overlapping pair by extending into the existing 8201..8210 ceiling:
+   * 8209 (group, finished, scored) + 8210 (quarter-final, scheduled).
+   */
+  test('/leaderboard?stage=quarter (stage-filtered, no quarter matches yet) has no a11y violations', async ({
+    page,
+  }) => {
+    const serviceRole = getServiceRoleClient();
+    const [eng, fra, ger, ita] = await pickFiveTeamUuids(serviceRole);
+
+    // Group match in the past — finished and scored so score_events is
+    // non-empty (defeats the global pre-tournament short-circuit).
+    const groupKickoff = new Date();
+    groupKickoff.setUTCDate(groupKickoff.getUTCDate() - 1);
+    // Quarter-final scheduled in the future so the per-stage empty branch
+    // can render its `<EmptyLeaderboardState/>` countdown for the quarter.
+    const quarterKickoff = new Date();
+    quarterKickoff.setUTCDate(quarterKickoff.getUTCDate() + 14);
+    quarterKickoff.setUTCHours(18, 0, 0, 0);
+
+    const seeded = await seedA11yMatches(serviceRole, [
+      {
+        providerId: 8209,
+        homeTeamId: eng,
+        awayTeamId: fra,
+        stage: 'group',
+        groupLabel: 'A',
+        kickoffUtc: groupKickoff.toISOString(),
+        status: 'scheduled',
+      },
+      {
+        providerId: 8210,
+        homeTeamId: ger,
+        awayTeamId: ita,
+        stage: 'quarter-final',
+        groupLabel: null,
+        kickoffUtc: quarterKickoff.toISOString(),
+        status: 'scheduled',
+      },
+    ]);
+    const groupMatch = seeded[0]!;
+    // Promote the group match to `finished` so the per-stage empty guard
+    // sees that the tournament is in flight (not pre-tournament).
+    await serviceRole
+      .from('matches')
+      .update({ status: 'finished', score_home: 1, score_away: 0 })
+      .eq('id', groupMatch.id);
+
+    // One participant + one score_event so score_events is non-empty
+    // (global short-circuit defeated) but the `quarter` MV stage has zero
+    // rows — the per-stage empty branch fires.
+    const oid = randomUUID();
+    const email = `${oid}@nortal.com`;
+    const { data: user } = await serviceRole.auth.admin.createUser({
+      email,
+      password: 'wcm-test-password-123',
+      email_confirm: true,
+      app_metadata: { tid: '00000000-0000-0000-0000-000000000000', oid, provider: 'azure' },
+      user_metadata: { name: 'A11y QF Seeder', email },
+    });
+    const { data: participant } = await serviceRole
+      .from('participants')
+      .insert({
+        auth_user_id: user!.user!.id,
+        oid,
+        email,
+        display_name: 'A11y QF Seeder',
+        status: 'active',
+      })
+      .select('id')
+      .single();
+    await serviceRole.from('score_events').insert({
+      participant_id: participant!.id,
+      match_id: groupMatch.id,
+      source: 'match-exact',
+      points: 10,
+    });
+    await serviceRole.rpc('refresh_leaderboard' as never);
+
+    await signInProvisionAndPinTz(page);
+
+    await page.goto('/leaderboard?stage=quarter');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Leaderboard' }),
+    ).toBeVisible();
+    // Sanity: per-stage empty branch DOES render the StageTabStrip (unlike
+    // the global pre-tournament branch) but does NOT render the <table>.
+    await expect(page.locator('table')).toHaveCount(0);
+    await expect(page.getByRole('tablist')).toBeVisible();
+    // Quarter tab is the active one (aria-selected="true" via StageTabStrip).
+    await expect(page.getByRole('tab', { selected: true })).toContainText(
+      /Quarter/i,
+    );
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
 });

@@ -183,5 +183,34 @@
       "emptyState": "Aún no tienes puntos. Tu puntuación aparecerá aquí a medida que terminen los partidos."
     },
     "vsSeparator": "vs"
+  },
+  "leaderboard": {
+    "pageTitle": "Clasificación",
+    "pageHeading": "Clasificación",
+    "pageDescription": "Clasificación en vivo de todos los participantes activos.",
+    "rankColumn": "Puesto",
+    "nameColumn": "Nombre",
+    "pointsColumn": "Puntos",
+    "showMyRank": "Ver mi puesto",
+    "yourRankSrLabel": "Tu puesto",
+    "emptyMessage": "La clasificación aparecerá cuando se puntúe el primer partido.",
+    "opensAt": "La clasificación se abre el",
+    "noMatchesYet": "Aún no hay partidos programados",
+    "previousPage": "Anterior",
+    "nextPage": "Siguiente",
+    "pageIndicator": "Página {page}",
+    "stageAll": "Todas",
+    "stageGroup": "Grupos",
+    "stageR16": "Octavos",
+    "stageQuarter": "Cuartos",
+    "stageSemi": "Semis",
+    "stageFinal": "Final",
+    "stageTabsLabel": "Filtrar clasificación por fase",
+    "widgetRankLabel": "Tu puesto",
+    "widgetPreTournament": "La clasificación se abre el {time}",
+    "widgetDeltaUp": "Sube {n}",
+    "widgetDeltaDown": "Baja {n}",
+    "widgetDeltaFlat": "Sin cambios",
+    "reconnecting": "Reconectando a las actualizaciones en vivo…"
   }
 }

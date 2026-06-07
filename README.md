@@ -302,3 +302,102 @@ See [`specs/003-predictions-and-scoring/quickstart.md`](specs/003-predictions-an
 - [`specs/003-predictions-and-scoring/spec.md`](specs/003-predictions-and-scoring/spec.md) — FRs / NFRs / TCs
 - [`specs/003-predictions-and-scoring/dod-verification.md`](specs/003-predictions-and-scoring/dod-verification.md) — audit evidence (per-FR/NFR/TC table + the match_results→matches schema note)
 - [`specs/003-predictions-and-scoring/contracts/`](specs/003-predictions-and-scoring/contracts/) — RPC + trigger contracts
+
+## Feature 004 — Leaderboard
+
+**Spec:** [`specs/004-leaderboard/`](specs/004-leaderboard/) (FRs, NFRs, TCs)
+**Setup guide:** [`specs/004-leaderboard/quickstart.md`](specs/004-leaderboard/quickstart.md)
+**DoD report:** [`specs/004-leaderboard/dod-verification.md`](specs/004-leaderboard/dod-verification.md)
+**Contracts:** [`specs/004-leaderboard/contracts/`](specs/004-leaderboard/contracts/) — MV + RPC + Realtime channel + cron + audit-event schemas
+
+### What shipped
+
+The ranking surface that closes the *predict → score → see-where-you-stand* loop:
+
+- **`/leaderboard` page** — Server-rendered table from the `leaderboard_snapshots` materialised view; one row per active participant (incl. 0-point joiners); rank + display name + active-tab points (per FR-L02 privacy projection).
+- **Stage tab strip** — `All` / `Group` / `R16` / `Quarter` / `Semi` / `Final`, WAI-ARIA tabs with keyboard nav, persisted via `?stage=` URL param. Each specific stage counts only that stage's match points; finals only on `All` (FC-L4).
+- **Deterministic tie-breakers** — total → exact hits → outcome hits → final-prediction points → shared rank (`1=`, `1=`, `3`). Tie-breaker #5 from `scoring-model.md` §7.4 (earliest submission time) is **not** adopted at launch (FC-L5).
+- **Realtime rank updates** — Client subscribes to `audit_log` rows filtered by `action=eq.leaderboard.refresh` (audit-event proxy pattern); on each event the visible slice re-fetches from the MV. Table re-renders without a page reload within 5 s (NFR-L2).
+- **Pre-tournament countdown** — Before the first `score_events` row exists, the rankings hide and a countdown to the first non-cancelled kickoff renders in the participant's timezone (FR-L07).
+- **Dashboard widget** — Compact "Your rank ↑/↓ N" card on `/dashboard`, Realtime-subscribed, click-through to `/leaderboard` with "Show my rank" pre-fired.
+- **Self-healing refresh** — `pg_cron` job `leaderboard-refresh-tick` runs every 5 minutes; `should_refresh_leaderboard()` STABLE predicate gates the actual `REFRESH MATERIALIZED VIEW CONCURRENTLY` (unconditional inside ±90 min of any match kickoff; otherwise only if the last refresh is >60 min old; skip pre-tournament entirely).
+- **Decoupled refresh on scoring** — Feature 003's scoring functions get a trailing `refresh_leaderboard()` call inside an exception-trapped block; refresh failure does NOT roll back scoring (FC-L2). Failures write `audit_log` `action='leaderboard.refresh_failed'` with SQLSTATE + error message.
+- **Privacy by projection** — Column-level `GRANT SELECT (participant_id, stage, display_name, total_points, rank, rank_is_shared)` on `leaderboard_snapshots`; the private columns (`exact_hits`, `outcome_hits`, `final_points`) are reachable only through the `leaderboard_self` companion view restricted to the caller's own row.
+
+> **Privacy note:** PostgreSQL 15 does not support `ROW LEVEL SECURITY` on materialised views, so FR-L02 / NFR-L6 are enforced via column GRANTs + the `leaderboard_self` view rather than MV-level RLS. See [`dod-verification.md`](specs/004-leaderboard/dod-verification.md) "Spec-vs-actual deviations" for the full list.
+
+### New environment variables
+
+None. The materialised view, RPC, cron schedule, and Realtime channel are entirely internal to Supabase.
+
+### Local commands
+
+Manually force a leaderboard refresh (useful after seeding data or testing the audit-event Realtime path):
+
+```bash
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SELECT refresh_leaderboard();"
+```
+
+Inspect the cron schedule (should list exactly one row for `leaderboard-refresh-tick`):
+
+```bash
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SELECT jobname, schedule FROM cron.job WHERE jobname='leaderboard-refresh-tick';"
+```
+
+Inspect the last 10 leaderboard refresh audit rows (success + failure interleaved):
+
+```bash
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SELECT occurred_at, action, new_value FROM audit_log
+      WHERE action IN ('leaderboard.refresh','leaderboard.refresh_failed')
+      ORDER BY occurred_at DESC LIMIT 10;"
+```
+
+Trigger gating predicate at a synthetic clock (`should_refresh_leaderboard()` is STABLE → safe to call ad hoc):
+
+```bash
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SELECT should_refresh_leaderboard();"
+```
+
+### Local test commands
+
+```bash
+# pgTAP — MV + RLS + RPC + cron gating + scoring-trigger extension
+docker exec -i supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -X -q -f - < test/pgtap/020_mv_leaderboard_snapshots.sql
+# Repeat for 021_rls_leaderboard_snapshots.sql, 022_refresh_leaderboard_rpc.sql,
+# 023_leaderboard_cron_gating.sql, 024_scoring_trigger_mv_extension.sql
+
+# Jest — pure helpers (delta, rank format, URL state, countdown)
+npm test -- --testPathPatterns="lib/leaderboard"
+
+# Playwright — feature 004 surfaces
+npx playwright test \
+  e2e/tests/leaderboard-page.spec.ts \
+  e2e/tests/leaderboard-tie-breakers.spec.ts \
+  e2e/tests/leaderboard-stage-filter.spec.ts \
+  e2e/tests/leaderboard-realtime.spec.ts \
+  e2e/tests/leaderboard-dashboard-widget.spec.ts \
+  e2e/tests/leaderboard-pre-tournament.spec.ts \
+  e2e/tests/leaderboard-privacy.spec.ts
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `/leaderboard` shows stale ranks after a finished match | Last scoring run's refresh failed (FC-L2 commits scoring even when refresh throws) | Check the gating predicate state and the most recent audit rows: `SELECT should_refresh_leaderboard();` then `SELECT occurred_at, action, new_value FROM audit_log WHERE action LIKE 'leaderboard.%' ORDER BY occurred_at DESC LIMIT 5;` — look for a `leaderboard.refresh_failed` row. Force a manual refresh via `SELECT refresh_leaderboard();` |
+| `permission denied for column exact_hits` (or `outcome_hits` / `final_points`) | Expected behaviour per FR-L02 — these columns are NOT in the public projection | Query the self row via the `leaderboard_self` view instead: `SELECT * FROM leaderboard_self WHERE stage='all';`. Cross-participant access to these columns is denied by design. |
+| Realtime channel disconnects in DevTools | Network blip; the client reconnects with backoff and surfaces `<ReconnectingIndicator/>` after 10 s offline (FR-L18) | Open DevTools → Network → WS and check the `wsFrames` count; if frames resume and the indicator clears the recovery worked. If frames stay at zero past 30 s, restart `supabase start`. |
+| Pre-tournament countdown still showing after a match has finished | Either `should_refresh_leaderboard()` returned false at the last cron tick (e.g. no scoring run has fired yet for that match) or the FR-L22 guard is still satisfied (no `score_events` row exists) | Verify a `score_events` row exists for the finished match (`SELECT count(*) FROM score_events;`); if zero, the match's `status` and scores may not have been committed — see feature 003 troubleshooting. |
+| `cron.job` row missing in deployed Supabase Cloud project | `pg_cron` not enabled on the project, or migration 0035 hasn't run | Verify `CREATE EXTENSION pg_cron;` then re-run `supabase db push`; expected pg_cron is Pro tier+. |
+
+### Cross-references
+
+- [`specs/004-leaderboard/spec.md`](specs/004-leaderboard/spec.md) — FRs / NFRs / TCs / FC constraints
+- [`specs/004-leaderboard/dod-verification.md`](specs/004-leaderboard/dod-verification.md) — audit evidence + spec-vs-actual deviation log
+- [`specs/004-leaderboard/contracts/`](specs/004-leaderboard/contracts/) — MV / RPC / Realtime channel / cron / audit-event schemas
+- [`specs/004-leaderboard/research.md`](specs/004-leaderboard/research.md) — design rationale (MV-level RLS, audit-event proxy, cron gating predicate)
