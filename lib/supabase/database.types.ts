@@ -675,6 +675,13 @@ export type Database = {
         Returns: undefined
       }
       dismiss_welcome: { Args: never; Returns: Json }
+      get_movers_24h_aggregate: {
+        Args: never
+        Returns: {
+          delta_24h: number
+          participant_id: string
+        }[]
+      }
       is_admin_user: { Args: never; Returns: boolean }
       is_eligible_nortal_user: { Args: never; Returns: boolean }
       is_pre_tournament: { Args: never; Returns: boolean }

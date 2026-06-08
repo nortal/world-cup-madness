@@ -16,7 +16,11 @@
       "predictionsAria": "Predictions",
       "finalPredictions": "Final predictions",
       "breakdown": "Your breakdown"
-    }
+    },
+    "tabToday": "Today",
+    "tabPool": "Pool",
+    "tabsAriaLabel": "Dashboard view",
+    "refreshing": "Refreshing…"
   },
   "welcome": {
     "title": "Welcome to World Cup Madness",

@@ -16,7 +16,11 @@
       "predictionsAria": "Palpites",
       "finalPredictions": "Palpites finais",
       "breakdown": "Seu detalhamento"
-    }
+    },
+    "tabToday": "Hoje",
+    "tabPool": "Bolão",
+    "tabsAriaLabel": "Visualização do painel",
+    "refreshing": "Atualizando…"
   },
   "welcome": {
     "title": "Bem-vindo ao World Cup Madness",

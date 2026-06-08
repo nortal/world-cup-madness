@@ -16,7 +16,11 @@
       "predictionsAria": "Pronósticos",
       "finalPredictions": "Pronósticos finales",
       "breakdown": "Tu desglose"
-    }
+    },
+    "tabToday": "Hoy",
+    "tabPool": "Bolsa",
+    "tabsAriaLabel": "Vista del panel",
+    "refreshing": "Actualizando…"
   },
   "welcome": {
     "title": "Bienvenido a World Cup Madness",
