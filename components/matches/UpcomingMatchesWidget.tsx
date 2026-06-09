@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import ExpandableMatchCard from '@/components/matches/ExpandableMatchCard';
 import MatchCard from '@/components/matches/MatchCard';
 import { type Locale } from '@/lib/matches/format-kickoff';
 import type { MatchStatus } from '@/lib/matches/lock-badge';
@@ -71,12 +72,21 @@ export default async function UpcomingMatchesWidget({
 
   // Named FK embeds: the constraint names come from migration 0012 and are
   // confirmed in `database.types.ts` (Relationships block on `matches`).
+  //
+  // Feature 005 US-DB (T015): the `predictions` embed surfaces the caller's
+  // current prediction per match so `<ExpandableMatchCard/>` can pre-fill
+  // the inline form's score inputs. The embed is naturally scoped to the
+  // caller by the `predictions_select_own` RLS policy (migration 0029) —
+  // PostgREST RLS pushes down through embeds, so no client-side filter is
+  // needed and we never see other participants' predictions even if a row
+  // exists for the same match. See `contracts/query-upcoming-prediction.md`.
   const { data: rows, error } = await supabase
     .from('matches')
     .select(
       `id, provider_id, kickoff_utc, status, score_home, score_away, group_label,
        home_team:teams!matches_home_team_id_fkey(tla, name),
-       away_team:teams!matches_away_team_id_fkey(tla, name)`,
+       away_team:teams!matches_away_team_id_fkey(tla, name),
+       predictions(predicted_home_score, predicted_away_score)`,
     )
     .eq('status', 'scheduled')
     .gt('kickoff_utc', lockHorizonIso)
@@ -105,27 +115,48 @@ export default async function UpcomingMatchesWidget({
 
       {matches.length > 0 ? (
         <ul className="mt-4 space-y-3">
-          {matches.map((row) => (
-            <li key={row.id}>
-              <MatchCard
-                match={{
-                  id: row.id,
-                  kickoffUtc: row.kickoff_utc !== null ? new Date(row.kickoff_utc) : null,
-                  // The query filters to `status='scheduled'`, so the DB
-                  // value is guaranteed to be a valid MatchStatus literal.
-                  status: row.status as MatchStatus,
-                  scoreHome: row.score_home,
-                  scoreAway: row.score_away,
-                  groupLabel: row.group_label,
-                  homeTeam: { tla: row.home_team.tla, name: row.home_team.name },
-                  awayTeam: { tla: row.away_team.tla, name: row.away_team.name },
-                }}
-                nowUtc={nowUtc}
-                participantTz={participantTz}
-                locale={locale}
-              />
-            </li>
-          ))}
+          {matches.map((row) => {
+            const kickoffDate = row.kickoff_utc !== null ? new Date(row.kickoff_utc) : null;
+            // Server-derived lock state passed to `<ExpandableMatchCard/>`.
+            // The widget's DB filter (kickoff > now + 60 min) already
+            // excludes locked rows, so for everything we render here
+            // `locked` is `false` — but we recompute defensively so the
+            // boundary at exactly kickoff − 60 min is handled correctly if
+            // the server-side `now()` and the JS clock differ by a tick.
+            const locked =
+              kickoffDate === null ||
+              kickoffDate.getTime() - nowUtc.getTime() <= 60 * 60 * 1000;
+            const existing = row.predictions?.[0] ?? null;
+            return (
+              <li key={row.id}>
+                <ExpandableMatchCard
+                  matchId={row.id}
+                  kickoffUtc={row.kickoff_utc ?? new Date(0).toISOString()}
+                  initialHomeScore={existing?.predicted_home_score ?? null}
+                  initialAwayScore={existing?.predicted_away_score ?? null}
+                  locked={locked}
+                >
+                  <MatchCard
+                    match={{
+                      id: row.id,
+                      kickoffUtc: kickoffDate,
+                      // The query filters to `status='scheduled'`, so the DB
+                      // value is guaranteed to be a valid MatchStatus literal.
+                      status: row.status as MatchStatus,
+                      scoreHome: row.score_home,
+                      scoreAway: row.score_away,
+                      groupLabel: row.group_label,
+                      homeTeam: { tla: row.home_team.tla, name: row.home_team.name },
+                      awayTeam: { tla: row.away_team.tla, name: row.away_team.name },
+                    }}
+                    nowUtc={nowUtc}
+                    participantTz={participantTz}
+                    locale={locale}
+                  />
+                </ExpandableMatchCard>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className="mt-4 rounded-md border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-600">
