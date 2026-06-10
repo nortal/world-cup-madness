@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { computeDelta } from '@/lib/leaderboard/compute-delta';
@@ -54,6 +54,14 @@ export default function RankWidget({
 }: RankWidgetProps): React.ReactElement | null {
   const t = useTranslations('leaderboard');
 
+  // Stable per-mount channel suffix. DashboardPage renders the Today
+  // widgets twice (mobile panel + desktop grid) for the same DOM tree —
+  // both copies mount. supabase-js coalesces `supabase.channel(name)`
+  // calls by topic, so two identical channel names → the second mount's
+  // `.on()` lands on an already-SUBSCRIBED channel and throws. A unique
+  // suffix per mount gives each instance its own topic.
+  const instanceId = useId().replace(/:/g, '');
+
   // `previousRank` starts null on every mount — first paint has no
   // comparison point. We only assign a value when an inbound Realtime
   // event yields a new rank that differs from what we last rendered.
@@ -82,7 +90,7 @@ export default function RankWidget({
 
     const supabase = createClient();
     const channel = supabase
-      .channel(REALTIME_CHANNEL)
+      .channel(`${REALTIME_CHANNEL}-${instanceId}`)
       .on(
         'postgres_changes',
         {
@@ -133,7 +141,7 @@ export default function RankWidget({
     return () => {
       void channel.unsubscribe();
     };
-  }, [currentRank]);
+  }, [currentRank, instanceId]);
 
   // Branch 1 — pre-tournament empty state.
   if (currentRank === null && preTournamentTime !== null) {

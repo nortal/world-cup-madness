@@ -205,11 +205,19 @@ export default async function LeaderboardPage({
             ariaLabel={t('stageTabsLabel')}
           />
 
-          <EmptyLeaderboardState
-            firstKickoffUtc={firstKickoffUtc}
-            userTz={userTz}
-            locale={locale}
-          />
+          {/*
+            Wrap the per-stage empty state in `#leaderboard-table` so the
+            `<StageTabStrip/>` tab buttons' `aria-controls` target
+            resolves even on this branch — otherwise axe-core flags
+            `aria-valid-attr-value` (no element with that id exists).
+          */}
+          <div id="leaderboard-table">
+            <EmptyLeaderboardState
+              firstKickoffUtc={firstKickoffUtc}
+              userTz={userTz}
+              locale={locale}
+            />
+          </div>
         </main>
       );
     }
