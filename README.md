@@ -401,3 +401,74 @@ npx playwright test \
 - [`specs/004-leaderboard/dod-verification.md`](specs/004-leaderboard/dod-verification.md) — audit evidence + spec-vs-actual deviation log
 - [`specs/004-leaderboard/contracts/`](specs/004-leaderboard/contracts/) — MV / RPC / Realtime channel / cron / audit-event schemas
 - [`specs/004-leaderboard/research.md`](specs/004-leaderboard/research.md) — design rationale (MV-level RLS, audit-event proxy, cron gating predicate)
+
+## Feature 005 — Dashboard polish + mobile UX
+
+The dashboard at `/dashboard` is now a mobile-first tabbed surface (Today / Pool) that collapses to a desktop 2-column grid above 768 px. The Today tab houses Upcoming + Rank + Snapshot; the Pool tab houses Neighborhood + Movers + Digest. The Upcoming widget supports inline quick-edit. A Realtime stale-while-revalidate path keeps the entire dashboard in sync with leaderboard MV refreshes, announced by a polite-live "Refreshing…" chip.
+
+### Local commands
+
+```bash
+# Trigger a leaderboard refresh manually (audit-event broadcast handled by feature 004)
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SELECT refresh_leaderboard();"
+
+# Inspect movers aggregator output directly (debugging the FR-D11 widget)
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SET ROLE authenticated; SELECT * FROM get_movers_24h_aggregate() LIMIT 10;"
+
+# Force the refreshing chip to appear: in DevTools, throttle the network and
+# fire a refresh event so the 300 ms debounce + transition is observable.
+# The chip is mounted in the page header; it has role="status" and a
+# blue-100 background — search the DOM for `[role="status"]` while a
+# refresh is in flight.
+
+# Simulate the 360 px mobile viewport via DevTools device emulation or via
+# Playwright headed mode:
+#   npx playwright test e2e/tests/dashboard-mobile-tabs.spec.ts --headed
+```
+
+### Tests (full feature 005 surface)
+
+```bash
+# Database — the dashboard adds one read-only RPC (FC-D1 carve-out)
+docker exec -i supabase_db_world-cup-madness psql -U postgres -d postgres \
+  < test/pgtap/025_movers_aggregate_rpc.sql
+# (CREATE EXTENSION pgtap; is wiped by `supabase db reset` — re-run it first)
+
+# Jest — pure helpers (tab URL state, neighborhood window, movers 24 h,
+# weekly digest, snapshot lookup, lock countdown)
+npm test -- lib/dashboard/__tests__
+
+# Playwright — full dashboard suite (chromium)
+npx playwright test e2e/tests/dashboard-mobile-tabs.spec.ts \
+  e2e/tests/dashboard-inline-edit.spec.ts \
+  e2e/tests/dashboard-upcoming-widget.spec.ts \
+  e2e/tests/dashboard-neighborhood.spec.ts \
+  e2e/tests/dashboard-movers.spec.ts \
+  e2e/tests/dashboard-digest.spec.ts \
+  e2e/tests/dashboard-realtime.spec.ts \
+  e2e/tests/dashboard-pre-tournament.spec.ts
+
+# Accessibility (4 new dashboard surfaces — populated mobile/desktop +
+# pre-tournament). Use the existing accessibility project.
+npx playwright test e2e/tests/all-pages-a11y.spec.ts -g "dashboard"
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Pool tab always shows "Awaiting the first match" placeholders | `is_pre_tournament()` returns true → no rows in `score_events` | Verify `SELECT count(*) FROM score_events;` — if zero, run the feature 003 scoring trigger first (UPDATE a match to `status='finished'` with scores). The Pool widgets repopulate after the next MV refresh. |
+| Refreshing chip never appears during Realtime events | The leaderboard Realtime channel never received SUBSCRIBED, or `audit_log` events aren't being broadcast | Open DevTools → Network → WS, look for a `realtime` socket. If absent, `supabase start` may have failed Realtime — restart the stack. If present, fire `SELECT refresh_leaderboard();` and watch for an `audit_log` INSERT WHERE `action='leaderboard.refresh'`. |
+| Mobile tab strip not visible at the 360 px viewport | DevTools device emulation may not have triggered a re-render of the `block md:hidden` class; the tab strip is purely CSS-toggled | Reload the page at 360 px; Tailwind only re-evaluates breakpoints on layout pass. Alternatively run `npx playwright test e2e/tests/dashboard-mobile-tabs.spec.ts --headed` to see it in a real mobile viewport. |
+| Inline quick-edit save shows `errorLocked` when the match is > 60 min away | Server clock drift between the Postgres container and Node test process | The lock check is `kickoff_utc - now() > interval '60 minutes'` and runs server-side per BR-LOCK-001. If you see `errorLocked` with > 60 min remaining, `docker exec` the DB and inspect `SELECT now();` against your wall clock. Usually a Colima time-skew on macOS — restart Colima. |
+| RankWidget throws `cannot add postgres_changes callbacks for realtime:leaderboard-refresh after subscribe()` | Two RankWidget instances mounted with the same channel topic; supabase-js coalesces channels by name | Fixed in commit `7a6363c` — RankWidget now appends a per-mount `useId()` suffix to the channel name. If you see this on a branch off `master`, rebase to pick up that fix. |
+
+### Cross-references
+
+- [`specs/005-phase-4-dashboard/spec.md`](specs/005-phase-4-dashboard/spec.md) — FRs (FR-D01..D21) / NFRs / TCs / FCs
+- [`specs/005-phase-4-dashboard/dod-verification.md`](specs/005-phase-4-dashboard/dod-verification.md) — DoD audit + outstanding external items
+- [`specs/005-phase-4-dashboard/contracts/`](specs/005-phase-4-dashboard/contracts/) — widget query contracts + reused-RPC docs
+- [`specs/005-phase-4-dashboard/research.md`](specs/005-phase-4-dashboard/research.md) — design rationale (R-2 stale-while-revalidate, R-3 dual-render, R-4 movers RPC carve-out)
+- [`.ai_project_memory/constitution-frontend.md`](.ai_project_memory/constitution-frontend.md) — stack rows for the mobile-tabbed dashboard + stale-while-revalidate refresh patterns
