@@ -3,11 +3,13 @@ import { getLocale, getTranslations } from 'next-intl/server';
 
 import AdminNavLink from '@/components/auth/AdminNavLink';
 import DashboardClient from '@/components/auth/DashboardClient';
+import DashboardRealtime from '@/components/dashboard/DashboardRealtime';
 import DashboardTabStrip from '@/components/dashboard/DashboardTabStrip';
 import DigestWidget from '@/components/dashboard/DigestWidget';
 import MoversWidget from '@/components/dashboard/MoversWidget';
 import NeighborhoodWidget from '@/components/dashboard/NeighborhoodWidget';
 import RankWidget from '@/components/dashboard/RankWidget';
+import RefreshingChip from '@/components/dashboard/RefreshingChip';
 import SnapshotWidget from '@/components/dashboard/SnapshotWidget';
 import TimezoneAutoDetect from '@/components/matches/TimezoneAutoDetect';
 import UpcomingMatchesWidget from '@/components/matches/UpcomingMatchesWidget';
@@ -214,7 +216,18 @@ export default async function DashboardPage({
   return (
     <DashboardClient isFirstLogin={isFirstLogin}>
       <main className="mx-auto min-h-screen w-full max-w-5xl px-4 py-6">
+        {/* US-DD T037 — Client wrapper that owns the Realtime channel +
+            transition state. Provides `DashboardRefreshContext` to all
+            descendants so `<RefreshingChip/>` (below) can announce
+            in-flight re-fetches without lifting state into this Server
+            Component. */}
+        <DashboardRealtime activeTab={activeTab}>
         <header className="space-y-2">
+          {/* US-DD T035 — fixed-position polite-live status chip;
+              renders only while `isRefetching` is true. Mounted inside
+              the header so it sits above the tab strip in the visual
+              hierarchy. */}
+          <RefreshingChip />
           <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
           {/* T054 (US4 / FR-A5) — admin nav link, role-gated server-side. */}
           {participant.role === 'admin' && <AdminNavLink />}
@@ -286,6 +299,7 @@ export default async function DashboardPage({
             itself (`set_timezone`) is internally idempotent via its
             `WHERE timezone='UTC'` filter, so a stale gate is harmless. */}
         {participant.timezone === 'UTC' && <TimezoneAutoDetect />}
+        </DashboardRealtime>
       </main>
     </DashboardClient>
   );
