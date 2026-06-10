@@ -119,14 +119,15 @@ test.describe('US-DB — dashboard inline quick-edit', () => {
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
-    // Defensive: prior dashboard specs in the same suite (mover / digest
-    // / realtime / pre-tournament) seed matches in the 9501..9799 range
-    // and don't clean up between files. The dashboard's upcoming-match
-    // widget renders the next 3 matches by kickoff_utc, so any leftover
-    // would knock TC-D5's lock-boundary match off the visible list and
-    // the test would interact with the wrong card. Clear the broad
-    // range here so the widget only sees this file's seeds.
-    await client.from('matches').delete().gte('provider_id', 9501).lte('provider_id', 9799);
+    // Defensive: every other spec in the e2e suite seeds matches in
+    // provider_id ranges from 7401 (predictions-breakdown) up through
+    // 9799 (dashboard-pre-tournament) and doesn't clean up between
+    // files. The dashboard upcoming-match widget renders the next 3
+    // matches by kickoff_utc, so any leftover would knock TC-D5's
+    // lock-boundary match off the visible list and the test would
+    // interact with the wrong card. Clear the entire synthetic-id
+    // range so the widget only sees this file's seeds.
+    await client.from('matches').delete().gte('provider_id', 7000).lte('provider_id', 9999);
   });
 
   test.afterAll(async () => {

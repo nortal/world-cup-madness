@@ -87,6 +87,16 @@ async function seedFinishedMatch(
 }
 
 test.describe('US-LD — dashboard rank widget', () => {
+  // Pin to mobile viewport. Feature 005 US-DA (commit f281d3c) made
+  // DashboardPage render the Today widgets twice — once inside
+  // `#today-panel` (block md:hidden) and once inside the desktop grid
+  // (hidden md:grid). At the default desktop viewport both copies live
+  // in the DOM: `getByText(/Leaderboard opens at/i)` then resolves to 2
+  // elements (strict-mode violation) and `.first()` lands on the hidden
+  // mobile copy. The mobile viewport makes the mobile-panel copy the
+  // only live one and keeps the assertion semantics intact.
+  test.use({ viewport: { width: 360, height: 800 } });
+
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
@@ -112,7 +122,12 @@ test.describe('US-LD — dashboard rank widget', () => {
     await provisionFromAuthenticatedPage(page);
     await page.goto('/dashboard');
 
-    await expect(page.getByText(/Leaderboard opens at/i)).toBeVisible();
+    // Scope to `#today-panel` so we hit only the mobile-panel copy. The
+    // desktop-grid copy is `display:none` at this viewport but still
+    // present in the DOM, which would trip Playwright's strict mode.
+    await expect(
+      page.locator('#today-panel').getByText(/Leaderboard opens at/i),
+    ).toBeVisible();
   });
 
   test('TC-L10: rank widget renders rank + arrow indicator post-scoring', async ({
@@ -139,10 +154,11 @@ test.describe('US-LD — dashboard rank widget', () => {
     refreshLeaderboardMV();
 
     await page.goto('/dashboard');
-    // Widget shows the rank label + a numeric value (rank 1 since only one
-    // participant has score_events). Multiple "Your rank" strings render
-    // (sr-only heading + visible label) — assert at least one is present.
-    await expect(page.getByText(/Your rank/i).first()).toBeVisible();
-    await expect(page.getByText(/Your rank[\s:]+1\b/i).first()).toBeVisible();
+    // Widget shows the rank label + a numeric value (rank 1 since only
+    // one participant has score_events). Scoped to `#today-panel` so the
+    // desktop-grid copy of the same JSX is excluded (see TC-L11 comment).
+    const todayPanel = page.locator('#today-panel');
+    await expect(todayPanel.getByText(/Your rank/i).first()).toBeVisible();
+    await expect(todayPanel.getByText(/Your rank[\s:]+1\b/i).first()).toBeVisible();
   });
 });

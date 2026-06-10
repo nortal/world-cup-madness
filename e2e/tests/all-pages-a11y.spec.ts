@@ -759,12 +759,17 @@ test.describe('all pages — WCAG 2.1 AA axe-core sweep', () => {
         status: 'scheduled',
       },
     ]);
-    // Promote the seeded match to `finished` with a result so score_events
-    // bypass-inserts below are consistent with a real scored fixture.
-    await serviceRole
-      .from('matches')
-      .update({ status: 'finished', score_home: 1, score_away: 0 })
-      .eq('id', seeded!.id);
+    // Originally this test promoted the match to `status='finished'`
+    // with scores set. That trips the `matches_trigger_scoring` AFTER
+    // UPDATE trigger (feature 003 migration 0030), which inserts
+    // `no-prediction` 0-pt score_events for every active participant on
+    // this match — colliding with the explicit score_events bypass-
+    // inserts below on the partial unique index
+    // `score_events_one_per_participant_match`. The collision left the
+    // leaderboard MV empty and the populated branch never rendered.
+    // Keep the match `scheduled` so the trigger doesn't fire; the MV
+    // builds purely from `score_events` aggregations and doesn't care
+    // about match status.
 
     // Seed 5 participants directly via the service role (RLS bypass) — same
     // shape as `leaderboard-page.spec.ts:seedParticipant`. The signed-in

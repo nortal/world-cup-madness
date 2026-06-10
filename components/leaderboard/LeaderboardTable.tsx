@@ -52,7 +52,13 @@ export default function LeaderboardTable({
 
   return (
     <div className="mt-6 overflow-x-auto">
-      <table className="w-full border-collapse text-left text-sm">
+      {/*
+        `id="leaderboard-table"` resolves the `aria-controls` target on
+        every `<StageTabStrip/>` tab button. Without this id axe-core
+        reports `aria-valid-attr-value` on the strip because the
+        controls reference is dangling.
+      */}
+      <table id="leaderboard-table" className="w-full border-collapse text-left text-sm">
         <caption className="sr-only">
           {t('pageHeading')} — {stage}, {t('pageIndicator', { page })}
         </caption>
