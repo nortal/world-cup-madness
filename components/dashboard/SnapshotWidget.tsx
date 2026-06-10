@@ -39,18 +39,26 @@ type SnapshotWidgetProps = {
 // don't infer the join shapes deep enough, so we keep a local shape that
 // mirrors the contract result exactly — runtime data is validated by the
 // PostgREST query and the contract test (e2e/tests/dashboard-mobile-tabs).
+//
+// The query starts FROM `matches` and reverse-embeds both `predictions`
+// and `score_events` (both have an FK to `matches.id`). The original
+// shape started from `predictions` and tried to embed `score_events` —
+// but PostgREST cannot resolve a relationship between `predictions` and
+// `score_events` (no FK between them; they share only `matches.id` /
+// `participants.id`), so the embed failed with PGRST200 and `lastRes`
+// always returned `data: null` post-feature-005.
 type LastFinishedRow = {
-  predicted_home_score: number | null;
-  predicted_away_score: number | null;
-  matches: {
-    id: string;
-    kickoff_utc: string;
-    status: string;
-    score_home: number | null;
-    score_away: number | null;
-    home_team: { name: string } | null;
-    away_team: { name: string } | null;
-  } | null;
+  id: string;
+  kickoff_utc: string;
+  status: string;
+  score_home: number | null;
+  score_away: number | null;
+  home_team: { name: string } | null;
+  away_team: { name: string } | null;
+  predictions: Array<{
+    predicted_home_score: number;
+    predicted_away_score: number;
+  }>;
   score_events: Array<{ points: number }>;
 };
 
@@ -85,26 +93,24 @@ export default async function SnapshotWidget({
   // embed shape and RLS guarantees.
   const [lastRes, nextRes] = await Promise.all([
     supabase
-      .from('predictions')
+      .from('matches')
       .select(
         `
-          predicted_home_score,
-          predicted_away_score,
-          matches!inner(
-            id,
-            kickoff_utc,
-            status,
-            score_home,
-            score_away,
-            home_team:home_team_id ( name ),
-            away_team:away_team_id ( name )
-          ),
+          id,
+          kickoff_utc,
+          status,
+          score_home,
+          score_away,
+          home_team:home_team_id ( name ),
+          away_team:away_team_id ( name ),
+          predictions!inner ( predicted_home_score, predicted_away_score ),
           score_events ( points )
         `,
       )
-      .eq('participant_id', selfParticipantId)
-      .eq('matches.status', 'finished')
-      .order('kickoff_utc', { ascending: false, referencedTable: 'matches' })
+      .eq('status', 'finished')
+      .eq('predictions.participant_id', selfParticipantId)
+      .eq('score_events.participant_id', selfParticipantId)
+      .order('kickoff_utc', { ascending: false })
       .limit(1)
       .maybeSingle(),
     supabase
@@ -145,16 +151,16 @@ export default async function SnapshotWidget({
 
   const snapshot: SnapshotData = {
     lastFinished:
-      lastRow !== null && lastRow.matches !== null
+      lastRow !== null && lastRow.predictions[0] !== undefined
         ? {
-            matchId: lastRow.matches.id,
-            homeTeamName: lastRow.matches.home_team?.name ?? '',
-            awayTeamName: lastRow.matches.away_team?.name ?? '',
-            kickoffUtc: lastRow.matches.kickoff_utc,
-            predictedHomeScore: lastRow.predicted_home_score,
-            predictedAwayScore: lastRow.predicted_away_score,
-            actualHomeScore: lastRow.matches.score_home,
-            actualAwayScore: lastRow.matches.score_away,
+            matchId: lastRow.id,
+            homeTeamName: lastRow.home_team?.name ?? '',
+            awayTeamName: lastRow.away_team?.name ?? '',
+            kickoffUtc: lastRow.kickoff_utc,
+            predictedHomeScore: lastRow.predictions[0].predicted_home_score,
+            predictedAwayScore: lastRow.predictions[0].predicted_away_score,
+            actualHomeScore: lastRow.score_home,
+            actualAwayScore: lastRow.score_away,
             pointsAwarded: lastRow.score_events[0]?.points ?? 0,
           }
         : null,
