@@ -8,6 +8,7 @@ import DashboardTabStrip from '@/components/dashboard/DashboardTabStrip';
 import DigestWidget from '@/components/dashboard/DigestWidget';
 import MoversWidget from '@/components/dashboard/MoversWidget';
 import NeighborhoodWidget from '@/components/dashboard/NeighborhoodWidget';
+import PreTournamentPlaceholder from '@/components/dashboard/PreTournamentPlaceholder';
 import RankWidget from '@/components/dashboard/RankWidget';
 import RefreshingChip from '@/components/dashboard/RefreshingChip';
 import SnapshotWidget from '@/components/dashboard/SnapshotWidget';
@@ -139,6 +140,16 @@ export default async function DashboardPage({
     .limit(1)
     .maybeSingle();
 
+  // US-DE T041 / FR-D14 — pre-tournament gate. The Postgres helper
+  // returns true while no match has reached a scored terminal state
+  // (no rows in score_events). When true we swap the three Pool
+  // widgets for `<PreTournamentPlaceholder/>` so participants who
+  // navigate to the Pool tab before the first kickoff see a coherent
+  // "awaiting first match" surface instead of three empty widgets.
+  // Today widgets render unchanged — RankWidget / UpcomingMatches /
+  // Snapshot each carry their own pre-tournament branch.
+  const { data: isPreTournament } = await supabase.rpc('is_pre_tournament');
+
   // Pre-fetch the neighborhood participant IDs for `<MoversWidget/>` so it
   // can render the "Top 3 near you" sub-section without re-issuing the
   // total-participant-count query. Mirrors `<NeighborhoodWidget/>`'s slice
@@ -194,7 +205,16 @@ export default async function DashboardPage({
     </>
   );
 
-  const poolWidgets = (
+  const poolWidgets = isPreTournament ? (
+    <>
+      {/* US-DE T041 / FR-D14 — pre-tournament placeholders preserve the
+          same `aria-labelledby` ids as the live widgets so any downstream
+          SR bookmarks or test locators keep working through the swap. */}
+      <PreTournamentPlaceholder widgetType="neighborhood" locale={locale} />
+      <PreTournamentPlaceholder widgetType="movers" locale={locale} />
+      <PreTournamentPlaceholder widgetType="digest" locale={locale} />
+    </>
+  ) : (
     <>
       {/* US-DC T027 / FR-D10 — hybrid-clamped ±5 neighborhood slice. */}
       <NeighborhoodWidget

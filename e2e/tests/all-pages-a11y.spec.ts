@@ -1002,4 +1002,143 @@ test.describe('all pages — WCAG 2.1 AA axe-core sweep', () => {
       .analyze();
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });
+
+  // ---------------------------------------------------------------------------
+  // Feature 005 US-DE T044 / TC-D14 — dashboard a11y sweep across 4 surfaces.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Pre-mark welcome dismissed + give Self one 0-pt score_event so the
+   * populated dashboard renders the live (rank-bearing) widget set.
+   * Returns the Self participant_id for any follow-up seeding.
+   */
+  async function prepareDashboardParticipantWithScore(
+    page: Page,
+    providerId: number,
+  ): Promise<string> {
+    const oid = await signInProvisionAndPinTz(page);
+    const serviceRole = getServiceRoleClient();
+    const dismissedAt = new Date().toISOString();
+    const { error: dismissErr } = await serviceRole
+      .from('participants')
+      .update({ welcome_dismissed_at: dismissedAt })
+      .eq('oid', oid);
+    if (dismissErr) throw new Error(`welcome dismiss failed: ${dismissErr.message}`);
+    const { data: selfRow, error: selfErr } = await serviceRole
+      .from('participants')
+      .select('id')
+      .eq('oid', oid)
+      .single();
+    if (selfErr || !selfRow) throw new Error(`Self lookup failed: ${selfErr?.message}`);
+    const [eng, fra] = await pickFiveTeamUuids(getServiceRoleClient());
+    const [seeded] = await seedA11yMatches(serviceRole, [
+      {
+        providerId,
+        homeTeamId: eng,
+        awayTeamId: fra,
+        stage: 'group',
+        groupLabel: 'A',
+        kickoffUtc: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+        status: 'scheduled',
+      },
+    ]);
+    const { error: scoreErr } = await serviceRole.from('score_events').insert([
+      { participant_id: selfRow.id, match_id: seeded.id, source: 'match-wrong', points: 0 },
+    ]);
+    if (scoreErr) throw new Error(`Self score insert failed: ${scoreErr.message}`);
+    // Refresh MV so Self appears in leaderboard_snapshots — without this
+    // the live widgets fall back to their empty branches even though
+    // is_pre_tournament() correctly returns false.
+    const { execSync } = await import('node:child_process');
+    execSync(
+      'docker exec supabase_db_world-cup-madness psql -U postgres -d postgres -c "REFRESH MATERIALIZED VIEW CONCURRENTLY leaderboard_snapshots;"',
+      { stdio: 'pipe' },
+    );
+    return selfRow.id;
+  }
+
+  test('/dashboard (mobile, populated, tab=today) has no a11y violations', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await prepareDashboardParticipantWithScore(page, 8207);
+    await page.goto('/dashboard?tab=today');
+    await expect(page.getByRole('tablist')).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  test('/dashboard (mobile, populated, tab=pool) has no a11y violations', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await prepareDashboardParticipantWithScore(page, 8208);
+    await page.goto('/dashboard?tab=pool');
+    await expect(
+      page.locator('#pool-panel section[aria-labelledby="neighborhood-heading"]'),
+    ).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  test('/dashboard (desktop, populated) has no a11y violations', async ({ page }) => {
+    // Default chromium viewport ≈ 1280×720 → desktop grid renders both
+    // Today + Pool widget sets simultaneously per the FR-D02 contract.
+    await prepareDashboardParticipantWithScore(page, 8209);
+    await page.goto('/dashboard');
+    // Wait on the always-rendered greeting heading — the widget sections
+    // each render twice (mobile panel + desktop grid) and only the
+    // desktop copy is visible at this viewport; `.first()` would pick
+    // the hidden mobile one.
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+
+  test('/dashboard (mobile, pre-tournament) has no a11y violations', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    const oid = await signInProvisionAndPinTz(page);
+    const serviceRole = getServiceRoleClient();
+    await serviceRole
+      .from('participants')
+      .update({ welcome_dismissed_at: new Date().toISOString() })
+      .eq('oid', oid);
+    // Seed only an upcoming match — no score_events → is_pre_tournament=true
+    // → Pool widgets swap to PreTournamentPlaceholder. The beforeEach
+    // already truncates score_events for us, but we belt-and-brace via
+    // a wholesale clear inline.
+    const { execSync } = await import('node:child_process');
+    execSync(
+      'docker exec supabase_db_world-cup-madness psql -U postgres -d postgres -c "TRUNCATE TABLE score_events RESTART IDENTITY CASCADE; REFRESH MATERIALIZED VIEW CONCURRENTLY leaderboard_snapshots;"',
+      { stdio: 'pipe' },
+    );
+    const [eng, fra] = await pickFiveTeamUuids(serviceRole);
+    await seedA11yMatches(serviceRole, [
+      {
+        providerId: 8210,
+        homeTeamId: eng,
+        awayTeamId: fra,
+        stage: 'group',
+        groupLabel: 'A',
+        kickoffUtc: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+        status: 'scheduled',
+      },
+    ]);
+    await page.goto('/dashboard?tab=pool');
+    await expect(
+      page
+        .locator('#pool-panel section[aria-labelledby="neighborhood-heading"]')
+        .getByText(/Awaiting the first match/i),
+    ).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
 });

@@ -55,7 +55,11 @@
     "digestCountLabel": "Partidas pontuadas",
     "digestBestLabel": "Melhor pontuação",
     "digestWorstLabel": "Pior pontuação",
-    "digestEmptyState": "Ainda não há partidas pontuadas nesta semana."
+    "digestEmptyState": "Ainda não há partidas pontuadas nesta semana.",
+    "preTournamentHeading": "Aguardando a primeira partida",
+    "preTournamentMoversBody": "As classificações de quem mais subiu aparecerão quando o torneio começar.",
+    "preTournamentDigestBody": "Seu resumo semanal será preenchido após as primeiras partidas pontuadas.",
+    "preTournamentNeighborhoodBody": "A vizinhança no ranking abrirá quando a pontuação começar."
   },
   "welcome": {
     "title": "Bem-vindo ao World Cup Madness",

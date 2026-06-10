@@ -55,7 +55,11 @@
     "digestCountLabel": "Matches scored",
     "digestBestLabel": "Best single score",
     "digestWorstLabel": "Worst single score",
-    "digestEmptyState": "No matches scored yet this week."
+    "digestEmptyState": "No matches scored yet this week.",
+    "preTournamentHeading": "Awaiting the first match",
+    "preTournamentMoversBody": "Climber rankings will appear once the tournament begins.",
+    "preTournamentDigestBody": "Your weekly digest will populate after the first scored matches.",
+    "preTournamentNeighborhoodBody": "The leaderboard neighborhood opens once scoring starts."
   },
   "welcome": {
     "title": "Welcome to World Cup Madness",
