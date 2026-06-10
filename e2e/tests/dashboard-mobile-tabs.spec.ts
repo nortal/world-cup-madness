@@ -42,14 +42,21 @@ async function provisionFromAuthenticatedPage(page: Page): Promise<void> {
       const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
       await client.auth.getSession();
       const { error } = await client.rpc('provision_participant_from_jwt');
-      return error ? { ok: false as const, error: error.message } : { ok: true as const };
+      if (error) return { ok: false as const, error: error.message };
+      // Dismiss the first-login welcome modal so it does not intercept
+      // tab navigation clicks. See dashboard-inline-edit.spec.ts for
+      // the rationale.
+      const { error: dismissError } = await client.rpc('dismiss_welcome');
+      return dismissError
+        ? { ok: false as const, error: dismissError.message }
+        : { ok: true as const };
     },
     {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321',
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
     },
   );
-  expect(result.ok, 'provision RPC must succeed').toBe(true);
+  expect(result.ok, 'provision + dismiss_welcome must succeed').toBe(true);
 }
 
 test.describe('US-DA — dashboard mobile tabs + responsive grid', () => {

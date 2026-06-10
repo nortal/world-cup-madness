@@ -207,6 +207,13 @@ async function signInAndPrepare(page: Page): Promise<string> {
       if (error !== null && error !== undefined) {
         return { ok: false as const, error: error.message };
       }
+      // Dismiss the first-login welcome modal so it does not block
+      // dashboard interactions / intercept the widget rendering. See
+      // dashboard-inline-edit.spec.ts for the rationale.
+      const { error: dismissError } = await client.rpc('dismiss_welcome');
+      if (dismissError !== null && dismissError !== undefined) {
+        return { ok: false as const, error: dismissError.message };
+      }
       return { ok: true as const };
     },
     {
@@ -214,7 +221,7 @@ async function signInAndPrepare(page: Page): Promise<string> {
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
     },
   );
-  expect(provision.ok, 'provision_participant_from_jwt RPC must succeed').toBe(true);
+  expect(provision.ok, 'provision + dismiss_welcome must succeed').toBe(true);
 
   await setParticipantTimezone(oid, 'Europe/Tallinn');
   return oid;
@@ -303,6 +310,16 @@ test.describe('US-MA / TC-M10 — dashboard upcoming-matches widget', () => {
   test('TC-M10: dashboard widget renders next 3 upcoming matches with UPCOMING badges, replacing empty state', async ({
     page,
   }) => {
+    // Pin to mobile viewport. Feature 005 US-DA (commit f281d3c) made
+    // DashboardPage render the Today widgets twice — once inside the
+    // mobile `#today-panel` (block md:hidden) and once inside the
+    // desktop grid (hidden md:grid). At the default desktop viewport
+    // both copies live in the DOM, so the original `count==3` assertion
+    // here would see 6, and `.first()` would resolve to the hidden
+    // mobile copy. The mobile viewport makes the mobile panel the only
+    // visible copy and keeps the assertion semantics intact.
+    await page.setViewportSize({ width: 360, height: 800 });
+
     await signInAndPrepare(page);
 
     await page.goto('/dashboard');
@@ -310,9 +327,10 @@ test.describe('US-MA / TC-M10 — dashboard upcoming-matches widget', () => {
 
     // -- Widget heading ----------------------------------------------------
     // `matches.dashboardWidget.heading` = "Upcoming matches". The h2 lives
-    // inside `<UpcomingMatchesWidget>` (rendered by the page).
+    // inside `<UpcomingMatchesWidget>` (rendered by the page). At mobile
+    // viewport only the mobile-panel copy is visible.
     await expect(
-      page.getByRole('heading', { level: 2, name: 'Upcoming matches' }),
+      page.locator('#today-panel').getByRole('heading', { level: 2, name: 'Upcoming matches' }),
     ).toBeVisible();
 
     // -- Exactly 3 match-card links ---------------------------------------
@@ -320,19 +338,14 @@ test.describe('US-MA / TC-M10 — dashboard upcoming-matches widget', () => {
     // always contain hyphens. The "View all matches" link is
     // `<Link href="/matches">` — no UUID and no hyphen. The compound CSS
     // selector therefore matches ONLY card links and excludes the catalog
-    // link without relying on visible text. See the file-top docblock for
-    // the rationale.
-    const matchCardLinks = page.locator('a[href^="/matches/"][href*="-"]');
+    // link without relying on visible text. Scoped to `#today-panel` so
+    // the desktop-grid copy of the same JSX is excluded.
+    const matchCardLinks = page.locator('#today-panel a[href^="/matches/"][href*="-"]');
     await expect(matchCardLinks.first()).toBeVisible();
     await expect(matchCardLinks).toHaveCount(3);
 
     // -- All 3 visible cards show the UPCOMING badge ----------------------
-    // The widget's query filters to status='scheduled' AND kickoff > now+60min,
-    // so `lockBadgeState()` derives 'UPCOMING' for every rendered row.
-    // `LockBadge` renders the literal "UPCOMING" text from
-    // `matches.badge.upcoming`. We assert one UPCOMING badge per rendered
-    // card by counting the visible occurrences inside the widget section.
-    const upcomingBadges = page.getByText('UPCOMING', { exact: true });
+    const upcomingBadges = page.locator('#today-panel').getByText('UPCOMING', { exact: true });
     await expect(upcomingBadges).toHaveCount(3);
 
     // -- Rows 4 and 5 are NOT rendered ------------------------------------

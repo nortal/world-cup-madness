@@ -86,25 +86,47 @@ async function provisionFromAuthenticatedPage(page: Page): Promise<void> {
       const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
       await client.auth.getSession();
       const { error } = await client.rpc('provision_participant_from_jwt');
-      return error ? { ok: false as const, error: error.message } : { ok: true as const };
+      if (error) {
+        return { ok: false as const, error: error.message };
+      }
+      // Dismiss the first-login welcome modal so it does not intercept
+      // the dashboard's interactive elements (Edit prediction button,
+      // tab strip, etc.). The modal is mounted via DashboardClient when
+      // `welcome_dismissed_at` is null; the public `dismiss_welcome` RPC
+      // writes the timestamp so the next /dashboard render hides it.
+      const { error: dismissError } = await client.rpc('dismiss_welcome');
+      return dismissError
+        ? { ok: false as const, error: dismissError.message }
+        : { ok: true as const };
     },
     {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321',
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
     },
   );
-  expect(provision.ok, 'provision_participant_from_jwt RPC must succeed').toBe(true);
+  expect(provision.ok, 'provision + dismiss_welcome must succeed').toBe(true);
 }
 
 test.describe('US-DB — dashboard inline quick-edit', () => {
   test.setTimeout(90_000);
+  // Pin to mobile viewport. DashboardPage renders the Today widgets twice
+  // (mobile #today-panel + desktop grid). At the default desktop viewport
+  // the mobile panel is `display:none` so `.first()` resolves to a hidden
+  // button. Mobile viewport makes only the mobile copy live, matching the
+  // test's name ("inline QUICK-edit" — a mobile-first UX gesture).
+  test.use({ viewport: { width: 360, height: 800 } });
 
   test.beforeEach(async () => {
     await resetSupabaseState();
     const client = getServiceRoleClient();
-    for (const pid of PROVIDER_IDS) {
-      await client.from('matches').delete().eq('provider_id', pid);
-    }
+    // Defensive: prior dashboard specs in the same suite (mover / digest
+    // / realtime / pre-tournament) seed matches in the 9501..9799 range
+    // and don't clean up between files. The dashboard's upcoming-match
+    // widget renders the next 3 matches by kickoff_utc, so any leftover
+    // would knock TC-D5's lock-boundary match off the visible list and
+    // the test would interact with the wrong card. Clear the broad
+    // range here so the widget only sees this file's seeds.
+    await client.from('matches').delete().gte('provider_id', 9501).lte('provider_id', 9799);
   });
 
   test.afterAll(async () => {
@@ -123,8 +145,13 @@ test.describe('US-DB — dashboard inline quick-edit', () => {
 
     await page.goto('/dashboard');
 
-    const expandToggle = page.getByRole('button', { name: /edit prediction/i }).first();
+    // Locate the toggle by its stable `aria-controls` attribute rather
+    // than the accessible name — the name flips between "Edit prediction"
+    // and "Collapse" when toggled (see ExpandableMatchCard l.112), so a
+    // name-based locator stops resolving the moment the panel expands.
+    const expandToggle = page.locator('button[aria-controls^="expand-"]').first();
     await expect(expandToggle).toBeVisible();
+    await expect(expandToggle).toHaveAttribute('aria-expanded', 'false');
     await expandToggle.click();
     await expect(expandToggle).toHaveAttribute('aria-expanded', 'true');
 
@@ -132,8 +159,7 @@ test.describe('US-DB — dashboard inline quick-edit', () => {
     await page.locator('input[name=awayScore]').first().fill('1');
     await page.getByRole('button', { name: /^save$/i }).first().click();
 
-    // The card collapses on save — the toggle button text reverts to
-    // "Edit prediction" and aria-expanded flips back to false.
+    // The card collapses on save — aria-expanded flips back to false.
     await expect(expandToggle).toHaveAttribute('aria-expanded', 'false', { timeout: 5_000 });
   });
 
@@ -207,7 +233,8 @@ test.describe('US-DB — dashboard inline quick-edit', () => {
 
     await page.goto('/dashboard');
 
-    const expandToggle = page.getByRole('button', { name: /edit prediction/i }).first();
+    // See TC-D3 comment — the toggle's accessible name flips on expand.
+    const expandToggle = page.locator('button[aria-controls^="expand-"]').first();
     await expect(expandToggle).toBeVisible();
     await expandToggle.click();
 
