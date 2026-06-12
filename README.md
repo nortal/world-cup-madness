@@ -472,3 +472,80 @@ npx playwright test e2e/tests/all-pages-a11y.spec.ts -g "dashboard"
 - [`specs/005-phase-4-dashboard/contracts/`](specs/005-phase-4-dashboard/contracts/) — widget query contracts + reused-RPC docs
 - [`specs/005-phase-4-dashboard/research.md`](specs/005-phase-4-dashboard/research.md) — design rationale (R-2 stale-while-revalidate, R-3 dual-render, R-4 movers RPC carve-out)
 - [`.ai_project_memory/constitution-frontend.md`](.ai_project_memory/constitution-frontend.md) — stack rows for the mobile-tabbed dashboard + stale-while-revalidate refresh patterns
+
+## Feature 006 — Phase 5 Operational Readiness
+
+Adds the operational layer for the live tournament window: when `integration_runs.status='error'` or `scoring_runs.status='error'` lands, a Microsoft Teams webhook POST reaches the configured channel within ≤ 5 minutes carrying a PII-scrubbed error context + a direct link to one of two kickoff-MUST runbooks (`provider-sync-failure.md` / `scoring-failure.md`). Every notification attempt is audited to `audit_log` via two new actions (`notification.teams.sent` + `notification.teams.failed`), and a 60-second `pg_cron` reconciler updates the audit trail with the eventual HTTP outcome. Six follow-on runbooks land alongside (`match-window-readiness`, `realtime-channel-drop`, `mv-refresh-stuck`, `admin-manual-recalc`, `lock-boundary-triage`, `post-tournament-archival`).
+
+### Local commands
+
+```bash
+# Configure the Teams webhook URL for local dev (mock receiver path)
+docker exec -e PGPASSWORD=postgres supabase_db_world-cup-madness \
+  psql -U supabase_admin -d postgres -c \
+  "ALTER DATABASE postgres SET app.env = 'development'; \
+   ALTER DATABASE postgres SET app.teams_webhook_url = 'http://kong:8000/functions/v1/mock-teams-receiver?respond_with=200'; \
+   SELECT pg_reload_conf();"
+
+# Boot the mock Teams receiver Edge Function
+SYNC_FIXTURE_MODE=1 npx supabase functions serve mock-teams-receiver --env-file .env.local
+
+# Fire a synthetic error and watch the audit_log stream
+docker exec -i supabase_db_world-cup-madness psql -U postgres -d postgres <<SQL
+INSERT INTO integration_runs (provider, action, status, error_message, started_at, finished_at)
+VALUES ('football-data.org', 'bootstrap', 'error',
+        'Synthetic — alice@nortal.com on participant 00112233-4455-6677-8899-aabbccddeeff',
+        now(), now());
+SELECT id, action, entity_type, new_value
+FROM audit_log
+WHERE action LIKE 'notification.teams.%'
+ORDER BY occurred_at DESC LIMIT 3;
+SQL
+
+# Force-tick the reconciler so the audit row's http_status updates immediately
+docker exec -i supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "SELECT reconcile_teams_notifications_now();"
+
+# Run the match-window-readiness query bundle (paste into Supabase Studio)
+cat docs/runbooks/match-window-readiness.md | sed -n '/```sql/,/```/p' | head -50
+```
+
+### Tests (full feature 006 surface)
+
+```bash
+# pgTAP — 4 suites covering CHECK enum + PII scrubber + trigger behaviour + FR-O09 extension
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres \
+  -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
+for f in test/pgtap/026_audit_log_action_extension.sql \
+         test/pgtap/027_scrub_pii_for_teams.sql \
+         test/pgtap/028_notify_teams_on_runs_error.sql \
+         test/pgtap/029_extend_notification_audit_log.sql; do
+    docker exec -i supabase_db_world-cup-madness psql -U postgres -d postgres -X -q < "$f"
+done
+
+# Playwright — notification suite (3 specs covering TC-O1, TC-O2, TC-O5,
+# TC-O6, TC-O9, TC-O10, TC-O11, TC-O12)
+npx playwright test e2e/tests/notification-*.spec.ts --project=chromium
+
+# Secret hygiene — verify no webhook URL leaked into a tracked file
+bash scripts/ci/secret-hygiene-grep.sh
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `permission denied to set parameter "app.teams_webhook_url"` | `supautils` blocks the `postgres` role from `ALTER DATABASE … SET app.*` | Use `supabase_admin` with `PGPASSWORD=postgres` — see Local commands above |
+| Teams message does not arrive | Stale connection in PostgREST / pg_net worker pool still holds the old `app.teams_webhook_url` value | The test helpers terminate idle backends + wait 1.5 s after every URL change so the new value lands. For manual setup, re-issue any command after the GUC change to force a reconnect |
+| `_test_mock_teams_inbox` missing | `app.env` not set to `'development'` when migration 0040 applied | `ALTER DATABASE postgres SET app.env = 'development';` then re-apply 0040 (or `npx supabase db reset`) |
+| Reconciler doesn't update `http_status` | `pg_cron` job stuck or the manual force-tick wrapper not used | `SELECT reconcile_teams_notifications_now();` runs the reconciler immediately. Confirm `pg_cron` job is active via `SELECT * FROM cron.job WHERE jobname='reconcile-teams-notifications';` |
+| Notification audit row has `entity_id=NULL` for an `integration_runs` row | `audit_log.entity_id` is UUID; `integration_runs.id` is BIGSERIAL — no cast | By design — the bigint id is preserved in `new_value->>'run_id'`. The reconciler joins by `new_value->>'req_id'`, so the linkage stays intact |
+
+### Cross-references
+
+- [`specs/006-phase-5-operational/spec.md`](specs/006-phase-5-operational/spec.md) — FRs (FR-O01..O12) / NFRs (NFR-O01..O05) / TCs (TC-O1..O12) / FCs
+- [`specs/006-phase-5-operational/dod-verification.md`](specs/006-phase-5-operational/dod-verification.md) — DoD audit + outstanding external items
+- [`specs/006-phase-5-operational/research.md`](specs/006-phase-5-operational/research.md) — design rationale (R-1 pg_net trigger choice, R-3 PII scrub patterns, R-5 reconciler design)
+- [`specs/006-phase-5-operational/contracts/`](specs/006-phase-5-operational/contracts/) — Teams payload + audit_log shapes + trigger + reconciler + scrubber contracts
+- [`docs/runbooks/README.md`](docs/runbooks/README.md) — runbook index (8 entries: 2 kickoff MUST + 6 follow-on)
+- [`.ai_project_memory/constitution-backend.md`](.ai_project_memory/constitution-backend.md) — 3 new stack rows: pg_net DB-trigger pattern, PII scrub helper, audit_log enum extension per feature

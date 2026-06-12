@@ -4,10 +4,23 @@ This folder holds the operational procedures the **ops admin** (= the existing t
 
 ## Index
 
+### Kickoff MUST runbooks (in scope for tournament Day 1)
+
 | Runbook | When to read it | Owner |
 |---------|------------------|-------|
 | [provider-sync-failure.md](provider-sync-failure.md) | Teams pinged "WCM integration_runs error" → start here | Ops admin |
 | [scoring-failure.md](scoring-failure.md) | Teams pinged "WCM scoring_runs error" → start here | Ops admin |
+
+### Follow-on runbooks (lands progressively across the early tournament)
+
+| Runbook | When to read it | Owner |
+|---------|------------------|-------|
+| [match-window-readiness.md](match-window-readiness.md) | Run 30 min before any known match window — answers "is the system healthy" | Ops admin |
+| [realtime-channel-drop.md](realtime-channel-drop.md) | `ReconnectingIndicator` chip stays visible > 60 s on /dashboard or /leaderboard | Ops admin |
+| [mv-refresh-stuck.md](mv-refresh-stuck.md) | Teams pinged "WCM leaderboard.refresh_failed" OR `match-window-readiness` pane 4 has a failed-notification backlog | Ops admin |
+| [admin-manual-recalc.md](admin-manual-recalc.md) | Discovered score discrepancy after match correction; or before a public leaderboard reveal | Ops admin |
+| [lock-boundary-triage.md](lock-boundary-triage.md) | Participant disputes whether their prediction was correctly accepted or rejected at the lock boundary | Ops admin |
+| [post-tournament-archival.md](post-tournament-archival.md) | 2 weeks after the final match | Ops admin + business sponsor |
 
 ## Conventions
 

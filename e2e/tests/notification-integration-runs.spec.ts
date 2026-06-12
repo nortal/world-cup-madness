@@ -209,7 +209,7 @@ test.describe('US1 — Teams notification + audit for integration_runs errors', 
     await setWebhookUrl(MOCK_URL_410);
 
     const client = getServiceRoleClient();
-    const { data: run } = await client
+    const { data: run, error: insertErr } = await client
       .from('integration_runs')
       .insert({
         provider: 'football-data.org',
@@ -221,7 +221,9 @@ test.describe('US1 — Teams notification + audit for integration_runs errors', 
       } as never)
       .select('id')
       .single();
-    expect(run).not.toBeNull();
+    if (insertErr || !run) {
+      throw new Error(`integration_runs insert failed: ${insertErr?.message ?? 'no row returned'}`);
+    }
 
     await waitForInboxCount(client, 1);
     await forceReconcile();
@@ -250,7 +252,7 @@ test.describe('US1 — Teams notification + audit for integration_runs errors', 
     await setWebhookUrl(MOCK_URL_500);
 
     const client = getServiceRoleClient();
-    const { data: run } = await client
+    const { data: run, error: insertErr } = await client
       .from('integration_runs')
       .insert({
         provider: 'football-data.org',
@@ -262,7 +264,9 @@ test.describe('US1 — Teams notification + audit for integration_runs errors', 
       } as never)
       .select('id')
       .single();
-    expect(run).not.toBeNull();
+    if (insertErr || !run) {
+      throw new Error(`integration_runs insert failed: ${insertErr?.message ?? 'no row returned'}`);
+    }
 
     await waitForInboxCount(client, 1);
     await forceReconcile();
