@@ -39,6 +39,62 @@ cd <repository-name>
 | Git 2.9+ | `git --version` | `brew install git` |
 | Python 3.9+ | `python3 --version` | `brew install python` |
 | age | `age --version` | `brew install age` |
+| Node 20+ | `node --version` | `brew install node` |
+| Docker runtime (Colima recommended on macOS) | `colima status` | `brew install colima` |
+| Supabase CLI | `npx supabase --version` | `npm i -g supabase` (or via npx) |
+
+### Start the local dev environment
+
+```bash
+# 1. Boot the Docker runtime (4 CPU / 4 GB recommended for the full Supabase stack)
+colima start
+
+# 2. Start the Supabase local stack (Postgres + PostgREST + Auth + Edge Runtime on :54321)
+npx supabase start
+
+# 3. Apply the latest migrations + re-seed
+npx supabase db reset
+docker exec supabase_db_world-cup-madness psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
+
+# 4. Load the match fixture catalog (15 matches + 150 players from
+#    supabase/functions/sync-matches/__fixtures__/v4-sample.json)
+SYNC_FIXTURE_MODE=1 npx supabase functions serve sync-matches --env-file .env.local &
+sleep 5
+SR_KEY=$(grep "^SUPABASE_SERVICE_ROLE_KEY=" .env.local | cut -d= -f2)
+curl -X POST http://127.0.0.1:54321/functions/v1/sync-matches \
+  -H "Authorization: Bearer $SR_KEY" -H "Content-Type: application/json" \
+  -d '{"action":"bootstrap"}'
+pkill -f "supabase functions serve"
+
+# 5. Start the Next.js app
+npm install
+npm run dev          # dev mode (hot reload, /dev/signin available)
+# OR
+npm run build && npm start   # production mode (faster, /dev/signin returns 404)
+```
+
+Visit `http://127.0.0.1:3000/`. To skip the real Microsoft sign-in flow in dev mode, hit `http://127.0.0.1:3000/dev/signin?email=you@nortal.com` (add `&role=admin` for admin access). The `/dev/signin` route is gated to `NODE_ENV !== 'production'`.
+
+### Shut down the local dev environment
+
+```bash
+# Reverse order. Each command is independent — run as many as you need.
+
+# 1. Stop the Next.js app
+pkill -9 -f "next-server\|next dev\|next start"
+
+# 2. Stop any running Supabase Edge Functions (sync-matches, mock-teams-receiver, etc.)
+pkill -9 -f "supabase functions serve"
+
+# 3. Stop the Supabase local stack (Postgres + auth + storage)
+#    Data survives in a Docker volume; next `supabase start` picks up where you left off.
+npx supabase stop
+
+# 4. Stop Colima (frees the allocated 4 CPU / 4 GB RAM)
+colima stop
+```
+
+To verify everything is down: `lsof -i :3000 -i :54321` should return no rows.
 
 ## Directory Structure
 

@@ -255,5 +255,16 @@
     "widgetDeltaDown": "Cai {n}",
     "widgetDeltaFlat": "Sem mudança",
     "reconnecting": "Reconectando às atualizações em tempo real…"
+  },
+  "nav": {
+    "ariaLabel": "Navegação principal",
+    "dashboard": "Painel",
+    "matches": "Partidas",
+    "leaderboard": "Classificação",
+    "finalPredictions": "Previsões finais",
+    "breakdown": "Seu detalhamento",
+    "profile": "Perfil",
+    "adminConsole": "Console de admin",
+    "signOut": "Sair"
   }
 }
