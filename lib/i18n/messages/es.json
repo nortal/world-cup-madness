@@ -255,5 +255,16 @@
     "widgetDeltaDown": "Baja {n}",
     "widgetDeltaFlat": "Sin cambios",
     "reconnecting": "Reconectando a las actualizaciones en vivo…"
+  },
+  "nav": {
+    "ariaLabel": "Navegación principal",
+    "dashboard": "Panel",
+    "matches": "Partidos",
+    "leaderboard": "Clasificación",
+    "finalPredictions": "Predicciones finales",
+    "breakdown": "Tu desglose",
+    "profile": "Perfil",
+    "adminConsole": "Consola de admin",
+    "signOut": "Cerrar sesión"
   }
 }

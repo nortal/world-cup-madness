@@ -255,5 +255,16 @@
     "widgetDeltaDown": "Down {n}",
     "widgetDeltaFlat": "No change",
     "reconnecting": "Reconnecting to live updates…"
+  },
+  "nav": {
+    "ariaLabel": "Main navigation",
+    "dashboard": "Dashboard",
+    "matches": "Matches",
+    "leaderboard": "Leaderboard",
+    "finalPredictions": "Final predictions",
+    "breakdown": "Your breakdown",
+    "profile": "Profile",
+    "adminConsole": "Admin console",
+    "signOut": "Sign out"
   }
 }
